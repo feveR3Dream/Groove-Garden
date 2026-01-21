@@ -3,8 +3,16 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class VinylRecord : MonoBehaviour
 {
+    public Vector2 OrgPosition { get; private set; }
+
+
+    [Header("References")]
     [SerializeField] private VinylRecordSO vinylRecordSO;
+
+
+    // References
     private SpriteRenderer spriteRenderer;
+
 
     private void OnValidate()
     {
@@ -13,7 +21,7 @@ public class VinylRecord : MonoBehaviour
 
     private void Awake()
     {
-
+        OrgPosition = transform.position;   
     }
 
     private void UpdateVinylAppearance()

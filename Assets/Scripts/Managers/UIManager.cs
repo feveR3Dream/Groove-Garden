@@ -1,12 +1,16 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.PlasticSCM.Editor;
+using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get;  private set; }
+
     [Header("UI Elements")]
     public Button rightButton;   // Used mostly for transitioning
     public Button leftButton;   //  and moving left <-> right
@@ -15,59 +19,63 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI rightText;
     public TextMeshProUGUI leftText;
     public TextMeshProUGUI bottomText;
+    public TextMeshProUGUI guideText;    
 
 
     [Header("Values")]
     [SerializeField] private float transitionSpeed = 2.5f;    // Camera transition speed for transitioning
-    [SerializeField] private float browsingSpeed = 2.5f;      // Camera pan speed for browsing at SELECTION
-    [SerializeField] private float opacitySpeed = 2.5f;
 
 
     [Header("References")]
-    [SerializeField] private Transform leftCameraLimit;       // These values must be within
-    [SerializeField] private Transform rightCameraLimit;     //  left & right & top & bottom's 
-    [SerializeField] private Transform topCameraLimit;      //   shelf limit
-    [SerializeField] private Transform bottomCameraLimit;  //
+    public Transform LeftCameraLimit;       // These values must be within
+    public Transform RightCameraLimit;     //  left & right & top & bottom's 
+    public Transform TopCameraLimit;      //   shelf limit
+    public Transform BottomCameraLimit;  //
     [Space]
-    [SerializeField] private Transform leftShelfLimit;    
-    [SerializeField] private Transform rightShelfLimit;
-    [SerializeField] private Transform topShelfLimit;
-    [SerializeField] private Transform bottomShelfLimit;
+    public Transform LeftShelfLimit;
+    public Transform RightShelfLimit;
+    public Transform TopShelfLimit;
+    public Transform BottomShelfLimit;
 
 
-    [Header("Turntable Reference")]
-    [SerializeField] private Transform turntable;
+    [Header("Scripts")]
+    [SerializeField] private RecordManager recordManager;
+
 
     // References
-    private Screen currentScreen = Screen.Turntable;    // Default screen
-    private Direction currentHoverDirection = Direction.None;
+    public Screen CurrentScreen { get; private set; } = Screen.Turntable;    // Default screen
+    public Direction CurrentHoverDirection { get; private set; } = Direction.None;
+
     private Camera currentCamera;
+
+    private Dictionary<TextMeshProUGUI, Color> textColorSaver = new Dictionary<TextMeshProUGUI, Color>();
 
 
     // Values
-    private const float dimTextAlpha = 0.1f;
-    private const float highlightTextAlpha = 0.25f;
+    public bool IsTransitioning { get; private set; }
+
+    private const float dimTextAlpha = 0.25f;
+    private const float highlightTextAlpha = 0.5f;
 
     private Vector2 turntableScreenPos;
-    private Vector2 selectionScreenPos; // Will work on later.
-    private bool transitioning;
-    private bool canBrowse;
+
 
 
     private void OnEnable()
     {
         rightButton?.onClick.AddListener(() => Transition(Direction.Right));
         leftButton?.onClick.AddListener(() => Transition(Direction.Left));
+        bottomButton?.onClick.AddListener(recordManager.ToggleRecord);
 
-        //AddHoverListener(rightButton, () => OnHover(rightText, true), () => OnHover(rightText, false));
-        //AddHoverListener(leftButton, () => OnHover(leftText, true), () => OnHover(leftText, false));
-        //AddHoverListener(bottomButton, () => OnHover(bottomText, true), () => OnHover(bottomText, false));
+        AddHoverListener(leftButton, 
+            () => { CurrentHoverDirection = Direction.Left; OnHover(leftButton, leftText, Color.white, highlightTextAlpha); }, 
+            () => { CurrentHoverDirection = Direction.None; OffHover(leftButton, leftText); });
+        AddHoverListener(rightButton, 
+            () => { CurrentHoverDirection = Direction.Right; OnHover(rightButton, rightText, Color.white, highlightTextAlpha); }, 
+            () => { CurrentHoverDirection = Direction.None; OffHover(rightButton, rightText); });
 
-        //AddHoverListener(leftButton, () => OnHover(Direction.Left));
-        //AddHoverListener(rightButton, () => OnHover(Direction.Right));
-
-        AddHoverListener(leftButton, () => currentHoverDirection = Direction.Left, () => currentHoverDirection = Direction.None);
-        AddHoverListener(rightButton, () => currentHoverDirection = Direction.Right, () => currentHoverDirection = Direction.None);
+        EventDispatcher.Instance.Subscribe<EquipStatus>(CheckEquipStatus);
+        EventDispatcher.Instance.Subscribe<ToggleRecord>(ToggleRecordControl);
     }
 
 
@@ -75,83 +83,87 @@ public class UIManager : MonoBehaviour
     {
         rightButton?.onClick.RemoveListener(() => Transition(Direction.Right));
         leftButton?.onClick.RemoveListener(() => Transition(Direction.Left));
+        bottomButton?.onClick.RemoveListener(recordManager.ToggleRecord);
+
+        EventDispatcher.Instance.Unsubscribe<EquipStatus>(CheckEquipStatus);
+        EventDispatcher.Instance.Unsubscribe<ToggleRecord>(ToggleRecordControl);
     }
 
 
     private void Awake()
     {
-        selectionScreenPos = Camera.main.transform.position;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         currentCamera = Camera.main;
 
         SetButtonState(rightButton, rightText, true, interaction: true);
         SetButtonState(leftButton, leftText, false, interaction: false);
         SetButtonState(bottomButton, bottomText, false, interaction: false);
+
+        SetButtonTextContent(rightText, "Press to go to vinyl selection area");
+        guideText.gameObject.SetActive(false);
     }
 
 
-    private void Update()
+    private void OnHover(Button button, TextMeshProUGUI text, Color color, float alpha)
     {
-        if (currentScreen == Screen.Selection &&
-            !transitioning)
-        {
-            Corrector();
+        if (IsTransitioning || !button.interactable) return;
+        if (!textColorSaver.ContainsKey(text)) textColorSaver.Add(text, text.color);
 
-            if (currentHoverDirection != Direction.None)
-            {
-                ProcessContinuousHover(currentHoverDirection);
-            }
+        float clampedAlpha = Mathf.Clamp01(alpha);
+        Color tempColor = color;
+        tempColor.a = clampedAlpha;
+
+        text.color = tempColor;
+
+        Debug.Log(color);
+    }
+
+
+    private void OffHover(Button button, TextMeshProUGUI text)
+    {
+        if (IsTransitioning || !button.interactable) return;
+        if (textColorSaver.TryGetValue(text, out Color colorResult))
+        {
+            text.color = colorResult;
         }
     }
 
 
-    private void ProcessContinuousHover(Direction direction)
+    private void CheckEquipStatus(EquipStatus status)
     {
-        float speed = browsingSpeed * Time.deltaTime;
-
-        if (direction == Direction.Left)
+        if (status.equipped)
         {
-            // "Look Ahead" Logic:
-            // We only move Left if we are NOT currently touching the Left Wall
-            // (Use a small buffer like 0.01f to prevent floating point flicker)
-            if (leftCameraLimit.position.x > leftShelfLimit.position.x + 0.01f)
-            {
-                currentCamera.transform.position += Vector3.left * speed;
-            }
+            SetButtonState(bottomButton, bottomText, true, interaction: true);
         }
-        else if (direction == Direction.Right)
+        else
         {
-            // We only move Right if we are NOT currently touching the Right Wall
-            if (rightCameraLimit.position.x < rightShelfLimit.position.x - 0.01f)
-            {
-                currentCamera.transform.position += Vector3.right * speed;
-            }
+            SetButtonState(bottomButton, bottomText, false, interaction: false);
         }
     }
 
-    private void Corrector()
+
+    private void ToggleRecordControl(ToggleRecord toggle)
     {
-        // This function stays exactly as you wrote it. 
-        // Its job is just to push the camera back if it accidentally teleported out of bounds.
-        // I removed the "canBrowse" logic from here because ProcessContinuousHover now handles its own permissions.
-
-        Vector3 correction = Vector3.zero;
-
-        if (leftCameraLimit.position.x <= leftShelfLimit.position.x)
-            correction += Vector3.right;
-
-        else if (rightCameraLimit.position.x >= rightShelfLimit.position.x)
-            correction += Vector3.left;
-
-        else if (topCameraLimit.position.y >= topShelfLimit.position.y)
-            correction += Vector3.down;
-
-        else if (bottomCameraLimit.position.y <= bottomShelfLimit.position.y)
-            correction += Vector3.up;
-
-        // Apply correction if needed
-        if (correction != Vector3.zero)
+        if (toggle.hide)
         {
-            currentCamera.transform.position += correction * transitionSpeed * Time.deltaTime;
+            Debug.Log("Hidden");
+            SetButtonState(rightButton, rightText, false, interaction: false);
+            if (CurrentScreen == Screen.Selection)
+                SetButtonState(leftButton, leftText, false, interaction: false);
+        }
+        else 
+        {
+            Debug.Log("Not Hidden");
+            SetButtonState(rightButton, rightText, true, interaction: true);
+            if (CurrentScreen == Screen.Selection)
+                SetButtonState(leftButton, leftText, true, interaction: true);
         }
     }
 
@@ -167,52 +179,85 @@ public class UIManager : MonoBehaviour
         // If camera at TURNTABLE, move right to SELECTION until condition suggest stopping
         // If camera at SELECTION, move left to TURNTABLE's position
 
-        transitioning = true;
+        // FIX: Stop the function immediately if the direction is invalid for the current screen.
+        if (CurrentScreen == Screen.Turntable && direction == Direction.Left) yield break;
+        if (CurrentScreen == Screen.Selection && direction == Direction.Right) yield break;
+
+        OffHover(leftButton, leftText);
+        OffHover(rightButton, rightText);
+        guideText.gameObject.SetActive(false);
+
+        IsTransitioning = true; // move this to top if it doesn't work
 
         bool leftON = false;
         bool rightInteractable = false;
+        bool transitioned = false;
 
         SetButtonState(leftButton, leftText, false, interaction: false);
         SetButtonState(rightButton, rightText, false, interaction: false);
         SetButtonState(bottomButton, bottomText, false, interaction: false);
 
-        if (currentScreen == Screen.Turntable)
+        if (CurrentScreen == Screen.Turntable)
         {
-            if (direction == Direction.Left) yield return null;
-            while (leftCameraLimit.position.x <= leftShelfLimit.position.x)
+            if (direction == Direction.Right)
             {
-                // Move camera to the right
-                currentCamera.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;
-                yield return null;
-            }   
+                while (LeftCameraLimit.position.x <= LeftShelfLimit.position.x ||
+                       TopCameraLimit.position.x <= TopShelfLimit.position.x)
+                {
+                    // Move camera to the right
+                    currentCamera.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;
+                    yield return null;
+                }   
 
-            currentScreen = Screen.Selection;
-            leftON = true;
-            rightInteractable = false;
-        }
+                CurrentScreen = Screen.Selection;
 
-        else if (currentScreen == Screen.Selection)
-        {
-            if (direction == Direction.Left) yield return null;
-            while (currentCamera.transform.position.x > turntableScreenPos.x)
-            {
-                // Move camera to the right
-                currentCamera.transform.position += Vector3.left * transitionSpeed * Time.deltaTime;
-                yield return null;  
+                guideText.gameObject.SetActive(true);
+
+                leftON = true;
+                rightInteractable = false;
+                transitioned = true;
             }
-
-            currentScreen = Screen.Turntable;
-            leftON = false;
-            rightInteractable = true;
         }
 
+        else if (CurrentScreen == Screen.Selection)
+        {
+            if (direction == Direction.Left)
+            {
+                while (currentCamera.transform.position.x > turntableScreenPos.x)
+                {
+                    // Move camera to the right
+                    currentCamera.transform.position += Vector3.left * transitionSpeed * Time.deltaTime;
+                    yield return null;  
+                }
 
-        SetButtonState(leftButton, leftText, leftON, interaction: leftON);
-        SetButtonState(rightButton, rightText, true, interaction: rightInteractable);
-        if (GameManager.Instance.CurrentVinylRecord != null)
-            SetButtonState(bottomButton, bottomText, true, interaction: true);
+                CurrentScreen = Screen.Turntable;
 
-        transitioning = false;
+                leftON = false;
+                rightInteractable = true;
+                transitioned = true;
+            }
+        }
+
+        if (transitioned)
+        {
+            SetButtonState(leftButton, leftText, leftON, interaction: leftON);
+            SetButtonState(rightButton, rightText, true, interaction: true);
+            if (RecordManager.Instance.CurrentVinylRecord != null)
+                SetButtonState(bottomButton, bottomText, true, interaction: true);
+
+            SetButtonTextContent(leftText, "Hover here to move left\n\nPress to go back to turntable");
+
+            if (!rightInteractable) SetButtonTextContent(rightText, "Hover here to move right");
+            else SetButtonTextContent(rightText, "Press to go to vinyl selection area");
+
+            IsTransitioning = false;
+        }
+    }
+
+
+    private void SetButtonTextContent(TextMeshProUGUI text, string content)
+    {
+        text.text = content;
     }
 
 
@@ -242,39 +287,6 @@ public class UIManager : MonoBehaviour
         tempTextColor.a = target;
         text.color = tempTextColor;
     }
-
-
-    //private void Corrector()
-    //{
-    //    if (leftCameraLimit.position.x <= leftShelfLimit.position.x)
-    //    {
-    //        currentCamera.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;
-    //    } 
-    //    else if (rightCameraLimit.position.x >= rightShelfLimit.position.x)
-    //    {
-    //        currentCamera.transform.position += Vector3.left * transitionSpeed * Time.deltaTime;
-    //    }
-    //    else if (topCameraLimit.position.y >= topShelfLimit.position.y)
-    //    {
-    //        currentCamera.transform.position += Vector3.down * transitionSpeed * Time.deltaTime;
-    //    }
-    //    else if (bottomCameraLimit.position.y <= bottomShelfLimit.position.y)
-    //    {
-    //        currentCamera.transform.position += Vector3.up * transitionSpeed * Time.deltaTime;  
-    //    }
-
-    //    if (leftCameraLimit.position.x > leftShelfLimit.position.x &&
-    //        rightCameraLimit.position.x < rightShelfLimit.position.x &&
-    //        topCameraLimit.position.y < topShelfLimit.position.y &&
-    //        bottomCameraLimit.position.y > bottomShelfLimit.position.y)
-    //    {
-    //        canBrowse = true;
-    //    }
-    //    else
-    //    {
-    //        canBrowse = false;
-    //    }
-    //}
 
 
     private void AddHoverListener(Button button, System.Action onEnter, System.Action onExit)
