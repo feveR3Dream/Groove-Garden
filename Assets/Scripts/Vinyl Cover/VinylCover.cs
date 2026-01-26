@@ -1,13 +1,14 @@
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class VinylRecord : MonoBehaviour
+public class VinylCover : MonoBehaviour
 {
     public Vector2 OrgPosition { get; private set; }
 
 
     [Header("References")]
-    [SerializeField] private VinylRecordSO vinylRecordSO;
+    public VinylCoverSO VinylRecordSO;
+    public Record RecordDisk;
 
 
     // References
@@ -21,22 +22,28 @@ public class VinylRecord : MonoBehaviour
 
     private void Awake()
     {
-        OrgPosition = transform.position;   
+        OrgPosition = transform.position;
+        UpdateVinylAppearance();
     }
 
     private void UpdateVinylAppearance()
     {
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
 
-        if (vinylRecordSO != null)
+        if (VinylRecordSO != null)
         {
-            spriteRenderer.sprite = vinylRecordSO.cover;
-
+            spriteRenderer.sprite = VinylRecordSO.frontCover;
             this.transform.localScale = Vector3.one * Global.RecordShelfSize;
         }
         else
         {
             Debug.LogWarning("No SO.");
         }
+    }
+
+    public void IsFrontCover(bool isFront)
+    {
+        if (isFront) spriteRenderer.sprite = VinylRecordSO.frontCover;
+        else spriteRenderer.sprite = VinylRecordSO.backCover;
     }
 }

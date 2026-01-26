@@ -3,11 +3,13 @@ using UnityEngine;
 public class Global
 {
     // If the record is child of "Shelf"
-    public static float RecordShelfSize = 0.3f;
-    //public static float RecordHandlingSize = 0.9f;
+    public static float RecordShelfSize { get; private set; } = 0.3f;
 
     // If the record if child of "Equip Record Transform"
-    public static float RecordHandlingSize = 0.45f;
+    public static float RecordHandlingSize { get; private set; } = 0.45f;
+
+    // For spawning in record
+    public static float RecordDraggingSize { get; private set; } = 0.265f;
 
     // If scrolling is needed
     public static void ScrollMovement(Transform anything, float scrollSpeed)
@@ -31,8 +33,8 @@ public enum Screen // CHECK FOR "CURRENT SCREEN"
 #region For UI Buttons
 public enum Opacity
 {
-    Hide,
-    Show
+    Transparent,
+    Visible
 }
 
 public enum Direction // CHECK FOR "CURRENT HOVER DIRECTION"
@@ -44,8 +46,30 @@ public enum Direction // CHECK FOR "CURRENT HOVER DIRECTION"
 #endregion
 
 
-#region Event Dispatcher
-public struct EquipStatus { public bool equipped; }
-public struct ToggleRecord { public bool hide; }
-public struct RemoveRecord { };
+#region For Record UI
+public enum RecordToggle      // UNCOMMENT IF NEEDED TO USE
+{
+    Show,
+    Hide
+}
+
+public enum RecordExamine
+{
+    None,
+    Default,
+    Info,
+    Unsheathe,
+    Return
+}
+
+public enum RecordSide
+{
+    Front,
+    Back
+}
+
+public struct RecordToDrag
+{
+    public Record record;
+}
 #endregion

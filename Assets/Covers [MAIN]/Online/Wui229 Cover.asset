@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08c0668b778528646b7545c7e229824c, type: 3}
-  m_Name: Wui229
+  m_Script: {fileID: 11500000, guid: 5a46b7293cc8e3547b22ead05c72c5d8, type: 3}
+  m_Name: Wui229 Cover
   m_EditorClassIdentifier: 
-  cover: {fileID: 21300000, guid: 96b356dd58d639247870eacdaccc00e1, type: 3}
-  track: {fileID: 8300000, guid: 0c560b878e389bf4695c7323cf2cb19a, type: 3}
+  frontCover: {fileID: 21300000, guid: 96b356dd58d639247870eacdaccc00e1, type: 3}
+  backCover: {fileID: 21300000, guid: f75884b8fe146cc4390d17963981e93e, type: 3}
+  record: {fileID: 0}

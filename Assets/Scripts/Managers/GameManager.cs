@@ -5,7 +5,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    public VinylRecord CurrentVinylRecord { get; private set; } = null;
+    public VinylCover CurrentVinylRecord { get; private set; } = null;
 
 
     private void Awake()
@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void EquipRecord(VinylRecord record)
+    public void EquipRecord(VinylCover record)
     {
         CurrentVinylRecord = record;
         Debug.Log(CurrentVinylRecord.name);

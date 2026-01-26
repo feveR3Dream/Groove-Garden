@@ -15,10 +15,14 @@ public class UIManager : MonoBehaviour
     public Button rightButton;   // Used mostly for transitioning
     public Button leftButton;   //  and moving left <-> right
     public Button bottomButton;     // Access current vinyl record
+    public Button rightRecordButton;
+    public Button leftRecordButton;
     [Space]
     public TextMeshProUGUI rightText;
     public TextMeshProUGUI leftText;
     public TextMeshProUGUI bottomText;
+    public TextMeshProUGUI rightRecordText;
+    public TextMeshProUGUI leftRecordText;
     public TextMeshProUGUI guideText;    
 
 
@@ -60,12 +64,19 @@ public class UIManager : MonoBehaviour
     private Vector2 turntableScreenPos;
 
 
+    // Coroutines
+    private Coroutine transitioningCoroutine = null;
+
+
 
     private void OnEnable()
     {
         rightButton?.onClick.AddListener(() => Transition(Direction.Right));
         leftButton?.onClick.AddListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.AddListener(recordManager.ToggleRecord);
+        bottomButton?.onClick.AddListener(RecordManager.Instance.ToggleRecord);
+        leftRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordTransition(Direction.Left));
+        rightRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordTransition(Direction.Right));
+
 
         AddHoverListener(leftButton, 
             () => { CurrentHoverDirection = Direction.Left; OnHover(leftButton, leftText, Color.white, highlightTextAlpha); }, 
@@ -73,9 +84,16 @@ public class UIManager : MonoBehaviour
         AddHoverListener(rightButton, 
             () => { CurrentHoverDirection = Direction.Right; OnHover(rightButton, rightText, Color.white, highlightTextAlpha); }, 
             () => { CurrentHoverDirection = Direction.None; OffHover(rightButton, rightText); });
-
-        EventDispatcher.Instance.Subscribe<EquipStatus>(CheckEquipStatus);
-        EventDispatcher.Instance.Subscribe<ToggleRecord>(ToggleRecordControl);
+        AddHoverListener(bottomButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(bottomButton, bottomText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(bottomButton, bottomText); });
+        AddHoverListener(leftRecordButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(leftRecordButton, leftRecordText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(leftRecordButton, leftRecordText); });
+        AddHoverListener(rightRecordButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(rightRecordButton, rightRecordText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(rightRecordButton, rightRecordText); });
+    
     }
 
 
@@ -83,10 +101,10 @@ public class UIManager : MonoBehaviour
     {
         rightButton?.onClick.RemoveListener(() => Transition(Direction.Right));
         leftButton?.onClick.RemoveListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.RemoveListener(recordManager.ToggleRecord);
+        bottomButton?.onClick.RemoveListener(RecordManager.Instance.ToggleRecord);
+        leftRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordTransition(Direction.Left));
+        rightRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordTransition(Direction.Right));
 
-        EventDispatcher.Instance.Unsubscribe<EquipStatus>(CheckEquipStatus);
-        EventDispatcher.Instance.Unsubscribe<ToggleRecord>(ToggleRecordControl);
     }
 
 
@@ -105,6 +123,8 @@ public class UIManager : MonoBehaviour
         SetButtonState(rightButton, rightText, true, interaction: true);
         SetButtonState(leftButton, leftText, false, interaction: false);
         SetButtonState(bottomButton, bottomText, false, interaction: false);
+        SetButtonState(leftRecordButton, leftRecordText, false, interaction: false);
+        SetButtonState(rightRecordButton, rightRecordText, false, interaction: false);
 
         SetButtonTextContent(rightText, "Press to go to vinyl selection area");
         guideText.gameObject.SetActive(false);
@@ -121,8 +141,6 @@ public class UIManager : MonoBehaviour
         tempColor.a = clampedAlpha;
 
         text.color = tempColor;
-
-        Debug.Log(color);
     }
 
 
@@ -136,9 +154,9 @@ public class UIManager : MonoBehaviour
     }
 
 
-    private void CheckEquipStatus(EquipStatus status)
+    public void UpdateRecordEquip(bool equipped)
     {
-        if (status.equipped)
+        if (equipped)
         {
             SetButtonState(bottomButton, bottomText, true, interaction: true);
         }
@@ -149,18 +167,25 @@ public class UIManager : MonoBehaviour
     }
 
 
-    private void ToggleRecordControl(ToggleRecord toggle)
+    public void UpdateRecordInteraction(bool interactable)
     {
-        if (toggle.hide)
+        SetButtonState(leftRecordButton, leftRecordText, interactable, interaction: interactable);
+        SetButtonState(rightRecordButton, rightRecordText, interactable, interaction: interactable);
+    }
+
+
+    public void UpdateRecordHidden(bool hide)
+    {
+        if (hide)
         {
-            Debug.Log("Hidden");
+            Debug.Log("Not Hidden");
             SetButtonState(rightButton, rightText, false, interaction: false);
             if (CurrentScreen == Screen.Selection)
                 SetButtonState(leftButton, leftText, false, interaction: false);
         }
         else 
         {
-            Debug.Log("Not Hidden");
+            Debug.Log("Hidden");
             SetButtonState(rightButton, rightText, true, interaction: true);
             if (CurrentScreen == Screen.Selection)
                 SetButtonState(leftButton, leftText, true, interaction: true);
@@ -170,7 +195,10 @@ public class UIManager : MonoBehaviour
 
     private void Transition(Direction direction)
     {
-        StartCoroutine(Transitioning(direction));
+        if (transitioningCoroutine != null)
+            StopCoroutine(transitioningCoroutine);
+
+        transitioningCoroutine = StartCoroutine(Transitioning(direction));
     }
 
 
@@ -252,6 +280,8 @@ public class UIManager : MonoBehaviour
 
             IsTransitioning = false;
         }
+
+        transitioningCoroutine = null;
     }
 
 
@@ -267,7 +297,7 @@ public class UIManager : MonoBehaviour
 
         button.interactable = interaction && isVisible;
 
-        Opacity opacity = isVisible ? Opacity.Show : Opacity.Hide;
+        Opacity opacity = isVisible ? Opacity.Visible : Opacity.Transparent;
         SetOpacity(button, text, opacity);
     }
 
@@ -277,7 +307,7 @@ public class UIManager : MonoBehaviour
         Image image = button.GetComponent<Image>();
         if (image == null || text == null) return;
 
-        float target = opacity == Opacity.Show ? dimTextAlpha : 0f;
+        float target = opacity == Opacity.Visible ? dimTextAlpha : 0f;
 
         Color tempButtonColor = image.color;
         tempButtonColor.a = target;
@@ -295,14 +325,21 @@ public class UIManager : MonoBehaviour
 
         EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
 
-        // Pointer entry
+        // Pointer Entry
         EventTrigger.Entry enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-        enterEntry.callback.AddListener((data) => onEnter.Invoke());
+
+        // FIX: Check if the button is interactable before invoking!
+        enterEntry.callback.AddListener((data) =>
+        {
+            if (button.interactable) onEnter.Invoke();
+        });
+
         trigger.triggers.Add(enterEntry);
 
-        // Pointer exit
+        // Pointer Exit
         EventTrigger.Entry exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
         exitEntry.callback.AddListener((data) => onExit.Invoke());
+
         trigger.triggers.Add(exitEntry);
     }
 }
