@@ -70,6 +70,6 @@ public enum RecordSide
 
 public struct RecordToDrag
 {
-    public Record record;
+    public GameObject recordGO;
 }
 #endregion

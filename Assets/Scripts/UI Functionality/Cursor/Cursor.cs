@@ -44,22 +44,22 @@ public class Cursor : MonoBehaviour
         if (toMouseCoroutine != null)
             StopCoroutine(toMouseCoroutine);
 
-        toMouseCoroutine = StartCoroutine(MovingToMouse(reference.record));
+        toMouseCoroutine = StartCoroutine(MovingToMouse(reference.recordGO));
     }
 
-    private IEnumerator MovingToMouse(Record item)
+    private IEnumerator MovingToMouse(GameObject recordGO)
     {
         if (item == null) yield break;
 
-        this.item = item;
+        //this.item = item;
         //item.SpriteRenderer.color 
         
         // ADD COLOR FUNCTIONS WITHIN RECORD & VINYL COVER, DON'T CHANGE THEM HERE!!!!
 
-        while (true)
-        {
+        //while (true)
+        //{
             
-        }
+        //}
     }
 
 

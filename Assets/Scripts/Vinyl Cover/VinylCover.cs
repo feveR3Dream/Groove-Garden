@@ -8,7 +8,7 @@ public class VinylCover : MonoBehaviour
 
     [Header("References")]
     public VinylCoverSO VinylRecordSO;
-    public Record RecordDisk;
+    public GameObject RecordDisk;
 
 
     // References

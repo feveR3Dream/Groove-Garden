@@ -33,7 +33,7 @@ public class RecordManager : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Transform showRecordTransform;
 
-    private Record currentHandlingRecord;    // Used once a record is instantiated
+    private GameObject currentRecordGO;    // Used once a record is instantiated
 
 
     // Values
@@ -75,6 +75,7 @@ public class RecordManager : MonoBehaviour
     public void EquipRecord(VinylCover record)
     {
         if (!canEquip) return;
+
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
 
         canEquip = false;
@@ -185,31 +186,26 @@ public class RecordManager : MonoBehaviour
     // Like the name implies, take the cover off to reveal disk
     private IEnumerator UnsheatheRecord()
     {
-        currentHandlingRecord = Instantiate(CurrentVinylRecord.RecordDisk, (Vector2) showRecordTransform.position, Quaternion.identity);
-        
-        yield return RecordTransforming((Vector2) hideCoverTransform.position, false, unsheatheSpeed, Global.RecordHandlingSize);
-        RecordInteractable(true, currentHandlingRecord);
+        if (CurrentVinylRecord.RecordDisk != null)
+        {
+            GameObject recordDisk = CurrentVinylRecord.RecordDisk;
+            currentRecordGO = Instantiate(recordDisk, (Vector2) showRecordTransform.position, Quaternion.identity);
+        }
+        else yield break;
+
+        yield return RecordTransforming((Vector2)hideCoverTransform.position, false, unsheatheSpeed, Global.RecordHandlingSize);
+        RecordInteractable(true, currentRecordGO);
     }
 
 
 
     // Purpose is for the disk to follow mouse position
-    private void RecordInteractable(bool interactable, Record record)
+    private void RecordInteractable(bool interactable, GameObject recordGO)
     {
-
         RecordToDrag temp = new RecordToDrag
         { 
-            record = interactable ? record : null
+            recordGO = interactable ? recordGO : null
         };
-
-        if (!interactable)
-        {
-            if (currentHandlingRecord)
-            {
-                Destroy(currentHandlingRecord);
-                currentHandlingRecord = null;
-            }
-        }
 
         EventDispatcher.Instance.SendEvent(temp);
     }
