@@ -13,7 +13,7 @@ public class Browse : MonoBehaviour
 
 
     // References
-    private Camera currentCamera;
+    private Camera cam;
     private Vector2 differencePos;
 
 
@@ -26,11 +26,11 @@ public class Browse : MonoBehaviour
 
     private void Awake()
     {
-        currentCamera = Camera.main;
+        cam = Camera.main;
 
-        if (turntable != null && currentCamera != null)
+        if (turntable != null && cam != null)
         {
-            heightDifference = Mathf.Abs(turntable.position.y - currentCamera.transform.position.y);
+            heightDifference = Mathf.Abs(turntable.position.y - cam.transform.position.y);
         }
     }
 
@@ -123,7 +123,7 @@ public class Browse : MonoBehaviour
             }
         }
 
-        currentCamera.transform.position += correction;
+        cam.transform.position += correction;
     }
 
     private void HorizontalBrowse(Direction direction)
@@ -135,14 +135,14 @@ public class Browse : MonoBehaviour
             // Check Limits via Singleton
             if (UIManager.Instance.LeftCameraLimit.position.x > UIManager.Instance.LeftShelfLimit.position.x + 0.1f)
             {
-                currentCamera.transform.position += Vector3.left * speed;
+                cam.transform.position += Vector3.left * speed;
             }
         }
         else if (direction == Direction.Right)
         {
             if (UIManager.Instance.RightCameraLimit.position.x < UIManager.Instance.RightShelfLimit.position.x - 0.1f)
             {
-                currentCamera.transform.position += Vector3.right * speed;
+                cam.transform.position += Vector3.right * speed;
             }
         }
     }
@@ -158,14 +158,14 @@ public class Browse : MonoBehaviour
         {
             if (UIManager.Instance.TopCameraLimit.position.y < UIManager.Instance.TopShelfLimit.position.y)
             {
-                currentCamera.transform.Translate(Vector3.up * moveAmount);
+                cam.transform.Translate(Vector3.up * moveAmount);
             }
         }
         else if (moveAmount < 0)
         {
             if (UIManager.Instance.BottomCameraLimit.position.y > UIManager.Instance.BottomShelfLimit.position.y)
             {
-                currentCamera.transform.Translate(Vector3.up * moveAmount);
+                cam.transform.Translate(Vector3.up * moveAmount);
             }
         }
 
@@ -174,7 +174,7 @@ public class Browse : MonoBehaviour
 
     private void TurntableFollowCameraY()
     {
-        differencePos = new Vector2(turntable.position.x, currentCamera.transform.position.y + heightDifference);
+        differencePos = new Vector2(turntable.position.x, cam.transform.position.y + heightDifference);
         turntable.position = differencePos;
     }
 }

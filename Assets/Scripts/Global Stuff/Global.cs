@@ -9,7 +9,7 @@ public class Global
     public static float RecordHandlingSize { get; private set; } = 0.45f;
 
     // For spawning in record
-    public static float RecordDraggingSize { get; private set; } = 0.265f;
+    public static float RecordDraggingSize { get; private set; } = 0.27f;
 
     // If scrolling is needed
     public static void ScrollMovement(Transform anything, float scrollSpeed)

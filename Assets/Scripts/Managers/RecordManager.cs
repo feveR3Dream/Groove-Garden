@@ -28,12 +28,12 @@ public class RecordManager : MonoBehaviour
     public RecordExamine CurrentRecordExamine { get; private set; } = RecordExamine.None;
     public RecordSide CurrentRecordSide { get; private set; } = RecordSide.Front;
     public RecordToggle CurrentRecordToggle { get; private set; } = RecordToggle.Hide;
+    public GameObject CurrentRecordGO { get; private set; } = null;   // MAKE THIS GET, PRIVATE SET
+    public Transform ShowRecordTransform { get; private set; }
 
-    private Camera currentCamera;
+    private Camera cam;
     private SpriteRenderer spriteRenderer;
-    private Transform showRecordTransform;
 
-    private GameObject currentRecordGO;    // Used once a record is instantiated
 
 
     // Values
@@ -55,8 +55,8 @@ public class RecordManager : MonoBehaviour
         }
         Instance = this;
 
-        currentCamera = Camera.main;
-        showRecordTransform = currentCamera.transform;
+        cam = Camera.main;
+        ShowRecordTransform = cam.transform;
 
         if (hideRecordTransform != null && bottomCamLimit != null)
         {
@@ -99,7 +99,7 @@ public class RecordManager : MonoBehaviour
 
 
     // For inspecting & interacting with the record 
-    public void RecordTransition(Direction direction)
+    public void RecordTransition(Direction direction)    // LEFT/RIGHT BUTTON PRESSED
     {
         if (direction == Direction.None) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
@@ -137,7 +137,7 @@ public class RecordManager : MonoBehaviour
 
         if (CurrentRecordExamine == RecordExamine.Unsheathe)
         {
-            yield return StartCoroutine(UnsheatheRecord());
+            yield return StartCoroutine(UnsheathingRecordToggle(true));
         }
         else if (CurrentRecordExamine == RecordExamine.Return)
         {
@@ -182,23 +182,33 @@ public class RecordManager : MonoBehaviour
     }
 
 
-
     // Like the name implies, take the cover off to reveal disk
-    private IEnumerator UnsheatheRecord()
+    private IEnumerator UnsheathingRecordToggle(bool unsheathe)    // FIX THIS LATER
     {
-        if (CurrentVinylRecord.RecordDisk != null)
+        Vector2 targetPos = unsheathe ? (Vector2) hideCoverTransform.position : (Vector2) ShowRecordTransform.position;
+        if (!unsheathe) RecordInteractable(false, CurrentRecordGO);
+
+        if (CurrentVinylRecord.RecordDisk != null &&
+            CurrentRecordGO == null)
         {
             GameObject recordDisk = CurrentVinylRecord.RecordDisk;
-            currentRecordGO = Instantiate(recordDisk, (Vector2) showRecordTransform.position, Quaternion.identity);
+            CurrentRecordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity);
         }
-        else yield break;
 
-        yield return RecordTransforming((Vector2)hideCoverTransform.position, false, unsheatheSpeed, Global.RecordHandlingSize);
-        RecordInteractable(true, currentRecordGO);
+        yield return RecordTransforming(targetPos, false, unsheatheSpeed, Global.RecordHandlingSize);
+        if (unsheathe) RecordInteractable(true, CurrentRecordGO);
+        else
+        {
+            CurrentRecordExamine = RecordExamine.Default;
+
+            UIManager.Instance.UpdateRecordInteraction(true);
+
+            Destroy(CurrentRecordGO);
+            CurrentRecordGO = null;
+        }
     }
 
-
-
+    
     // Purpose is for the disk to follow mouse position
     private void RecordInteractable(bool interactable, GameObject recordGO)
     {
@@ -210,7 +220,6 @@ public class RecordManager : MonoBehaviour
         EventDispatcher.Instance.SendEvent(temp);
     }
 
-
     private IEnumerator FlipRecord(RecordSide side, RecordExamine examine)
     {
         if (CurrentRecordExamine != examine) 
@@ -221,14 +230,13 @@ public class RecordManager : MonoBehaviour
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordTransforming((Vector2)showRecordTransform.position, false, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
             UIManager.Instance.UpdateRecordInteraction(true);
     }
 
-
-    public void ToggleRecord()
+    public void ToggleRecord()    // BOTTOM BUTTON PRESSED
     {
         if (CurrentVinylRecord == null) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
@@ -244,7 +252,11 @@ public class RecordManager : MonoBehaviour
             {
                 Debug.Log("Back to Default");
                 activeMovementCoroutine = StartCoroutine(FlipRecord(RecordSide.Front, RecordExamine.Default));
-                return;
+            }
+            else if (CurrentRecordExamine == RecordExamine.Unsheathe)
+            {
+                Debug.Log("Sheathe Record and Back to Default");
+                activeMovementCoroutine = StartCoroutine(UnsheathingRecordToggle(false));
             }
             else
             {
@@ -252,13 +264,14 @@ public class RecordManager : MonoBehaviour
                 CurrentRecordToggle = RecordToggle.Hide;
                 activeMovementCoroutine = StartCoroutine(TogglingRecord(false));
             }
+
+            return;
         }
     }
 
-
     private IEnumerator TogglingRecord(bool show)
     {
-        Vector2 destination = show ? (Vector2)showRecordTransform.position : (Vector2)hideRecordTransform.position;
+        Vector2 destination = show ? (Vector2)ShowRecordTransform.position : (Vector2)hideRecordTransform.position;
 
         yield return RecordTransforming(destination, false, transitionSpeed, Global.RecordHandlingSize);
 
@@ -278,6 +291,7 @@ public class RecordManager : MonoBehaviour
 
         UIManager.Instance.UpdateRecordHidden(show);
     }
+
 
 
 

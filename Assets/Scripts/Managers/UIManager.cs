@@ -50,7 +50,7 @@ public class UIManager : MonoBehaviour
     public Screen CurrentScreen { get; private set; } = Screen.Turntable;    // Default screen
     public Direction CurrentHoverDirection { get; private set; } = Direction.None;
 
-    private Camera currentCamera;
+    private Camera cam;
 
     private Dictionary<TextMeshProUGUI, Color> textColorSaver = new Dictionary<TextMeshProUGUI, Color>();
 
@@ -118,7 +118,7 @@ public class UIManager : MonoBehaviour
 
         Instance = this;
 
-        currentCamera = Camera.main;
+        cam = Camera.main;
 
         SetButtonState(rightButton, rightText, true, interaction: true);
         SetButtonState(leftButton, leftText, false, interaction: false);
@@ -233,7 +233,7 @@ public class UIManager : MonoBehaviour
                        TopCameraLimit.position.x <= TopShelfLimit.position.x)
                 {
                     // Move camera to the right
-                    currentCamera.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;
+                    cam.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;
                     yield return null;
                 }   
 
@@ -251,10 +251,10 @@ public class UIManager : MonoBehaviour
         {
             if (direction == Direction.Left)
             {
-                while (currentCamera.transform.position.x > turntableScreenPos.x)
+                while (cam.transform.position.x > turntableScreenPos.x)
                 {
                     // Move camera to the right
-                    currentCamera.transform.position += Vector3.left * transitionSpeed * Time.deltaTime;
+                    cam.transform.position += Vector3.left * transitionSpeed * Time.deltaTime;
                     yield return null;  
                 }
 

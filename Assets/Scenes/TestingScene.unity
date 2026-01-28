@@ -3946,7 +3946,7 @@ MonoBehaviour:
   vinylShelfTransform: {fileID: 559610979}
   offset: 5
   transitionSpeed: 50
-  unsheatheSpeed: 5
+  unsheatheSpeed: 10
 --- !u!1 &1624720819
 GameObject:
   m_ObjectHideFlags: 0
@@ -4578,7 +4578,9 @@ MonoBehaviour:
   recordLayer:
     serializedVersion: 2
     m_Bits: 64
-  speed: 50
+  followMouseSpeed: 20
+  alphaFadeSpeed: 10
+  resizeSpeed: 10
 --- !u!1 &1840468239
 GameObject:
   m_ObjectHideFlags: 0
