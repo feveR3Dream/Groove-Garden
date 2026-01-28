@@ -37,7 +37,7 @@ public class Record : MonoBehaviour
         if (recordSO != null)
         {
             SpriteRenderer.sprite = recordSO.picture;
-            SpriteRenderer.sortingOrder = 2;
+            SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
             RecordTrack = recordSO.track;
 
             transform.localScale = Vector3.one * Global.RecordHandlingSize;
@@ -59,9 +59,9 @@ public class Record : MonoBehaviour
 
     private IEnumerator UpdatingRecordAlpha(float alpha, float fadeSpeed)
     {
+        Color targetColor = SpriteRenderer.color;
         while (SpriteRenderer.color.a != alpha)
         {
-            Color targetColor = SpriteRenderer.color;
             targetColor.a = alpha; 
 
             Color tempColor = Color.Lerp(SpriteRenderer.color, targetColor, fadeSpeed * Time.deltaTime);
@@ -69,6 +69,9 @@ public class Record : MonoBehaviour
 
             yield return null;
         }
+
+        SpriteRenderer.color = targetColor;
+        alphaCoroutine = null;
     }
 
 
@@ -94,5 +97,8 @@ public class Record : MonoBehaviour
 
             yield return null;
         }
+
+        transform.localScale = targetSize;
+        resizeCoroutine = null;
     }
 }

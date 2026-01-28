@@ -35,11 +35,9 @@ public class RecordManager : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
 
-
     // Values
     private bool canEquip = true;
     private int orgSortingOrder = 0;
-    private int equippedSortingOrder = 3;
 
 
     // Coroutines
@@ -72,7 +70,7 @@ public class RecordManager : MonoBehaviour
 
 
     // Pick up record from selection screen
-    public void EquipRecord(VinylCover record)
+    public void EquipRecordCover(VinylCover record)
     {
         if (!canEquip) return;
 
@@ -82,32 +80,33 @@ public class RecordManager : MonoBehaviour
         CurrentVinylRecord = record;
         CurrentVinylRecord.transform.SetParent(hideRecordTransform);
 
-        spriteRenderer = CurrentVinylRecord.GetComponent<SpriteRenderer>();
-        if (spriteRenderer) spriteRenderer.sortingOrder = equippedSortingOrder;
+        CurrentVinylRecord.SpriteRenderer.sortingOrder = Global.EquippedSortingOrder;
+        //spriteRenderer = CurrentVinylRecord.GetComponent<SpriteRenderer>();
+        //if (spriteRenderer) spriteRenderer.sortingOrder = equippedSortingOrder;
 
         activeMovementCoroutine = StartCoroutine(EquippingCoroutine());
     }
 
     private IEnumerator EquippingCoroutine()
     {
-        yield return RecordTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
 
-        UIManager.Instance.UpdateRecordEquip(true);
+        UIManager.Instance.UpdateRecordCoverEquip(true);
         activeMovementCoroutine = null;
     }
 
 
 
     // For inspecting & interacting with the record 
-    public void RecordTransition(Direction direction)    // LEFT/RIGHT BUTTON PRESSED
+    public void RecordCoverTransition(Direction direction)    // LEFT/RIGHT BUTTON PRESSED
     {
         if (direction == Direction.None) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
 
-        activeMovementCoroutine = StartCoroutine(RecordTransitioning(direction, CurrentRecordExamine));
+        activeMovementCoroutine = StartCoroutine(RecordCoverTransitioning(direction, CurrentRecordExamine));
     }
 
-    private IEnumerator RecordTransitioning(Direction direction, RecordExamine examine)
+    private IEnumerator RecordCoverTransitioning(Direction direction, RecordExamine examine)
     {
         UIManager.Instance.UpdateRecordInteraction(false);
 
@@ -141,11 +140,11 @@ public class RecordManager : MonoBehaviour
         }
         else if (CurrentRecordExamine == RecordExamine.Return)
         {
-            ReturnRecord();
+            ReturnRecordCover();
         }
         else
         {
-            yield return StartCoroutine(FlipRecord(CurrentRecordSide, CurrentRecordExamine));
+            yield return StartCoroutine(FlipRecordCover(CurrentRecordSide, CurrentRecordExamine));
         }
 
         activeMovementCoroutine = null;
@@ -154,7 +153,7 @@ public class RecordManager : MonoBehaviour
 
 
     // Return the record back to vinyl shelf on selection screen
-    private void ReturnRecord()
+    private void ReturnRecordCover()
     {
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
 
@@ -163,18 +162,18 @@ public class RecordManager : MonoBehaviour
         spriteRenderer = CurrentVinylRecord.GetComponent<SpriteRenderer>();
         if (spriteRenderer) spriteRenderer.sortingOrder = orgSortingOrder;
 
-        activeMovementCoroutine = StartCoroutine(ReturningRecord());
+        activeMovementCoroutine = StartCoroutine(ReturningRecordCover());
     }
 
-    private IEnumerator ReturningRecord()
+    private IEnumerator ReturningRecordCover()
     {
-        yield return RecordTransforming(CurrentVinylRecord.OrgPosition, false, transitionSpeed, Global.RecordShelfSize);
+        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, transitionSpeed, Global.RecordShelfSize);
 
         CurrentVinylRecord = null;
         canEquip = true;
 
-        UIManager.Instance.UpdateRecordEquip(false);
-        UIManager.Instance.UpdateRecordHidden(false);
+        UIManager.Instance.UpdateRecordCoverEquip(false);
+        UIManager.Instance.UpdateRecordCoverHidden(false);
 
         CurrentRecordToggle = RecordToggle.Hide;
 
@@ -186,7 +185,7 @@ public class RecordManager : MonoBehaviour
     private IEnumerator UnsheathingRecordToggle(bool unsheathe)    // FIX THIS LATER
     {
         Vector2 targetPos = unsheathe ? (Vector2) hideCoverTransform.position : (Vector2) ShowRecordTransform.position;
-        if (!unsheathe) RecordInteractable(false, CurrentRecordGO);
+        if (!unsheathe) RecordCoverInteractable(false, CurrentRecordGO);
 
         if (CurrentVinylRecord.RecordDisk != null &&
             CurrentRecordGO == null)
@@ -195,8 +194,8 @@ public class RecordManager : MonoBehaviour
             CurrentRecordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity);
         }
 
-        yield return RecordTransforming(targetPos, false, unsheatheSpeed, Global.RecordHandlingSize);
-        if (unsheathe) RecordInteractable(true, CurrentRecordGO);
+        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.RecordHandlingSize);
+        if (unsheathe) RecordCoverInteractable(true, CurrentRecordGO);
         else
         {
             CurrentRecordExamine = RecordExamine.Default;
@@ -210,7 +209,7 @@ public class RecordManager : MonoBehaviour
 
     
     // Purpose is for the disk to follow mouse position
-    private void RecordInteractable(bool interactable, GameObject recordGO)
+    private void RecordCoverInteractable(bool interactable, GameObject recordGO)
     {
         RecordToDrag temp = new RecordToDrag
         { 
@@ -220,23 +219,23 @@ public class RecordManager : MonoBehaviour
         EventDispatcher.Instance.SendEvent(temp);
     }
 
-    private IEnumerator FlipRecord(RecordSide side, RecordExamine examine)
+    private IEnumerator FlipRecordCover(RecordSide side, RecordExamine examine)
     {
         if (CurrentRecordExamine != examine) 
             CurrentRecordExamine = examine;
 
-        yield return RecordTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
 
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
             UIManager.Instance.UpdateRecordInteraction(true);
     }
 
-    public void ToggleRecord()    // BOTTOM BUTTON PRESSED
+    public void ToggleCover()    // BOTTOM BUTTON PRESSED
     {
         if (CurrentVinylRecord == null) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
@@ -251,7 +250,7 @@ public class RecordManager : MonoBehaviour
             if (CurrentRecordExamine == RecordExamine.Info)
             {
                 Debug.Log("Back to Default");
-                activeMovementCoroutine = StartCoroutine(FlipRecord(RecordSide.Front, RecordExamine.Default));
+                activeMovementCoroutine = StartCoroutine(FlipRecordCover(RecordSide.Front, RecordExamine.Default));
             }
             else if (CurrentRecordExamine == RecordExamine.Unsheathe)
             {
@@ -273,7 +272,7 @@ public class RecordManager : MonoBehaviour
     {
         Vector2 destination = show ? (Vector2)ShowRecordTransform.position : (Vector2)hideRecordTransform.position;
 
-        yield return RecordTransforming(destination, false, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(destination, false, transitionSpeed, Global.RecordHandlingSize);
 
         activeMovementCoroutine = null;
         CurrentRecordExamine = show ? RecordExamine.Default : RecordExamine.None;
@@ -289,29 +288,25 @@ public class RecordManager : MonoBehaviour
             UIManager.Instance.UpdateRecordInteraction(false);
         }
 
-        UIManager.Instance.UpdateRecordHidden(show);
+        UIManager.Instance.UpdateRecordCoverHidden(show);
     }
 
 
 
 
-    private IEnumerator RecordTransforming(Vector2 targetPos, bool isLocal, float speed, float? targetScale = null)
+    private IEnumerator RecordCoverTransforming(Vector2 targetPos, bool isLocal, float speed, float? targetScale = null)
     {
-        Transform t = CurrentVinylRecord.transform;
+        // 1. Scale
+        CurrentVinylRecord.UpdateCoverSize(targetScale.Value, speed);
 
+        Transform t = CurrentVinylRecord.transform;
         while (true)
         {
-            // 1. Move
+            // 2. Move
             if (isLocal)
                 t.localPosition = Vector3.Lerp(t.localPosition, targetPos, speed * Time.deltaTime);
             else
                 t.position = Vector3.Lerp(t.position, targetPos, speed * Time.deltaTime);
-
-            // 2. Scale (if requested)
-            if (targetScale.HasValue)
-            {
-                t.localScale = Vector3.Lerp(t.localScale, Vector3.one * targetScale.Value, speed * Time.deltaTime);
-            }
 
             // 3. Check Distance
             float dist = isLocal ? Vector3.Distance(t.localPosition, targetPos) : Vector3.Distance(t.position, targetPos);
@@ -324,6 +319,5 @@ public class RecordManager : MonoBehaviour
         if (isLocal) t.localPosition = targetPos;
         else t.position = targetPos;
 
-        if (targetScale.HasValue) t.localScale = Vector3.one * targetScale.Value;
     }
 }

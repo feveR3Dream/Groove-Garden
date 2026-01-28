@@ -151,11 +151,15 @@ public class Cursor : MonoBehaviour
                     currentSelectedRecord = null;
                     return;
                 }
-                else currentSelectedRecord = tempSelectedRecord;
+                else
+                {
+                    currentSelectedRecord = tempSelectedRecord;
+                    
+                    if (spriteRenderer == null)
+                        spriteRenderer = currentSelectedRecord.GetComponent<SpriteRenderer>();                    
+                }
 
-                spriteRenderer = currentSelectedRecord.GetComponent<SpriteRenderer>();
-
-                savedColor = spriteRenderer.color;
+                currentSelectedRecord.SavedColor = spriteRenderer.color;
                 Debug.Log("Hit object: " + hit.collider.gameObject.name);
             }
 
@@ -166,19 +170,16 @@ public class Cursor : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero, 10f, recordLayer);
 
             if (hit.collider != null &&
-                hit.collider.GetComponent<VinylCover>() == currentSelectedRecord)
+                currentSelectedRecord != null)
             {
-                Color tempColor = savedColor;
-                tempColor.a = 0.75f;
-                spriteRenderer.color = tempColor;
+                currentSelectedRecord.UpdateCoverAlpha(1);
             }
             else
             {
                 if (spriteRenderer == null ||
                     currentSelectedRecord == null) return;
 
-                spriteRenderer.color = savedColor;
-                spriteRenderer = null;
+                currentSelectedRecord.UpdateCoverAlpha(0.75f);
                 currentSelectedRecord = null;
                 Debug.Log("Nothing hit at mouse position.");
             }
@@ -189,9 +190,9 @@ public class Cursor : MonoBehaviour
             if (currentSelectedRecord != null)
             {
                 Debug.Log("Selected record!");
-                RecordManager.Instance.EquipRecord(currentSelectedRecord);
+                RecordManager.Instance.EquipRecordCover(currentSelectedRecord);
 
-                spriteRenderer.color = savedColor;
+                currentSelectedRecord.UpdateCoverAlpha(1);
                 currentSelectedRecord = null;
             }
         }

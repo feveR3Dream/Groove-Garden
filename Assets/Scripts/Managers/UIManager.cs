@@ -73,9 +73,9 @@ public class UIManager : MonoBehaviour
     {
         rightButton?.onClick.AddListener(() => Transition(Direction.Right));
         leftButton?.onClick.AddListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.AddListener(RecordManager.Instance.ToggleRecord);
-        leftRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordTransition(Direction.Left));
-        rightRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordTransition(Direction.Right));
+        bottomButton?.onClick.AddListener(RecordManager.Instance.ToggleCover);
+        leftRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
+        rightRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
 
 
         AddHoverListener(leftButton, 
@@ -101,9 +101,9 @@ public class UIManager : MonoBehaviour
     {
         rightButton?.onClick.RemoveListener(() => Transition(Direction.Right));
         leftButton?.onClick.RemoveListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.RemoveListener(RecordManager.Instance.ToggleRecord);
-        leftRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordTransition(Direction.Left));
-        rightRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordTransition(Direction.Right));
+        bottomButton?.onClick.RemoveListener(RecordManager.Instance.ToggleCover);
+        leftRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
+        rightRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
 
     }
 
@@ -154,7 +154,7 @@ public class UIManager : MonoBehaviour
     }
 
 
-    public void UpdateRecordEquip(bool equipped)
+    public void UpdateRecordCoverEquip(bool equipped)
     {
         if (equipped)
         {
@@ -174,7 +174,7 @@ public class UIManager : MonoBehaviour
     }
 
 
-    public void UpdateRecordHidden(bool hide)
+    public void UpdateRecordCoverHidden(bool hide)
     {
         if (hide)
         {

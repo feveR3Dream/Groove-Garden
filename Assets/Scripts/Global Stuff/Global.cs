@@ -11,6 +11,14 @@ public class Global
     // For spawning in record
     public static float RecordDraggingSize { get; private set; } = 0.27f;
 
+    // For vinyl cover
+    public static int OnShelfSortingOrder { get; private set; } = 0;
+    public static int EquippedSortingOrder { get; private set; } = 5;
+
+    // For vinyl record
+    public static int SpawnedInSortingOrder { get; private set; } = 4;
+    public static int PlaySortingOrder { get; private set; } = 2;
+
     // If scrolling is needed
     public static void ScrollMovement(Transform anything, float scrollSpeed)
     {

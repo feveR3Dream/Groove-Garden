@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -12,27 +13,40 @@ public class VinylCover : MonoBehaviour
 
 
     // References
-    private SpriteRenderer spriteRenderer;
+    public SpriteRenderer SpriteRenderer { get; private set; }
+    private Color savedColor;
+    public Color SavedColor
+    {
+        get { return savedColor; }
+        set { savedColor = value; }
+    }
+
+
+    // Coroutines
+    private Coroutine resizeCoroutine = null;
+
 
 
     private void OnValidate()
     {
-        UpdateVinylAppearance();
+        UpdateCoverAppearance();
     }
 
     private void Awake()
     {
         OrgPosition = transform.position;
-        UpdateVinylAppearance();
+        UpdateCoverAppearance();
     }
 
-    private void UpdateVinylAppearance()
+    private void UpdateCoverAppearance()
     {
-        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (SpriteRenderer == null) SpriteRenderer = GetComponent<SpriteRenderer>();
 
         if (VinylRecordSO != null)
         {
-            spriteRenderer.sprite = VinylRecordSO.frontCover;
+            SpriteRenderer.sprite = VinylRecordSO.frontCover;
+            SpriteRenderer.sortingOrder = Global.OnShelfSortingOrder;
+
             this.transform.localScale = Vector3.one * Global.RecordShelfSize;
         }
         else
@@ -41,9 +55,48 @@ public class VinylCover : MonoBehaviour
         }
     }
 
+
+    public void UpdateCoverAlpha(float alpha)
+    {
+        alpha = Mathf.Clamp01(alpha);
+
+        Color tempColor = SavedColor;
+        tempColor.a = alpha;
+        SpriteRenderer.color = tempColor;
+    }
+
+
+    public void UpdateCoverSize(float size, float resizeSpeed)
+    {
+        Vector3 targetSize = Vector3.one * size;
+
+        if (resizeCoroutine != null)
+        {
+            StopCoroutine(resizeCoroutine);
+            resizeCoroutine = null;
+        }
+
+        resizeCoroutine = StartCoroutine(ResizingCover(targetSize, resizeSpeed));
+    }
+
+    private IEnumerator ResizingCover(Vector3 targetSize, float resizeSpeed)
+    {
+        while (!Mathf.Approximately(transform.localScale.magnitude, targetSize.magnitude))
+        {
+            Vector3 tempScale = Vector3.Lerp(transform.localScale, targetSize, resizeSpeed * Time.deltaTime);
+            transform.localScale = tempScale;
+
+            yield return null;
+        }
+
+        transform.localScale = targetSize;
+        resizeCoroutine = null;
+    }
+
+
     public void IsFrontCover(bool isFront)
     {
-        if (isFront) spriteRenderer.sprite = VinylRecordSO.frontCover;
-        else spriteRenderer.sprite = VinylRecordSO.backCover;
+        if (isFront) SpriteRenderer.sprite = VinylRecordSO.frontCover;
+        else SpriteRenderer.sprite = VinylRecordSO.backCover;
     }
 }
