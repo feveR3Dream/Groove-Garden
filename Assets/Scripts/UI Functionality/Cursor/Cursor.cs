@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Cursor : MonoBehaviour
@@ -48,6 +47,7 @@ public class Cursor : MonoBehaviour
         MouseInput();
     }
 
+
     private void ProcessRecord(RecordToDrag reference)
     {
         // CASE 1: Stop Command (Null Record)
@@ -61,7 +61,7 @@ public class Cursor : MonoBehaviour
         record = reference.recordGO.GetComponent<Record>();
 
         float alphaTarget = 0.5f;
-        float resizeTarget = Global.RecordDraggingSize;
+        float resizeTarget = Global.RecordDiskDraggingSize;
 
         record.UpdateRecordAlpha(alphaTarget, alphaFadeSpeed);
         record.UpdateRecordSize(resizeTarget, resizeSpeed);
@@ -122,7 +122,7 @@ public class Cursor : MonoBehaviour
         {
             // Reset visuals
             this.record.UpdateRecordAlpha(1f, alphaFadeSpeed);
-            this.record.UpdateRecordSize(Global.RecordHandlingSize, resizeSpeed);
+            this.record.UpdateRecordSize(Global.RecordDiskSpawnedSize, resizeSpeed);
 
             // Start returning to CENTER (followMouse = false)
             DragRecord(this.record.gameObject, false);

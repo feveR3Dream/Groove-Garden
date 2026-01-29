@@ -229,8 +229,8 @@ public class UIManager : MonoBehaviour
         {
             if (direction == Direction.Right)
             {
-                while (LeftCameraLimit.position.x <= LeftShelfLimit.position.x ||
-                       TopCameraLimit.position.x <= TopShelfLimit.position.x)
+                while (LeftCameraLimit.position.x <= LeftShelfLimit.position.x 
+                    && TopCameraLimit.position.x <= TopShelfLimit.position.x)
                 {
                     // Move camera to the right
                     cam.transform.position += Vector3.right * transitionSpeed * Time.deltaTime;

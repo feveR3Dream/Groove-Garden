@@ -1,23 +1,34 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Global
 {
     // If the record is child of "Shelf"
-    public static float RecordShelfSize { get; private set; } = 0.3f;
+    public static float RecordCoverShelfSize { get; private set; } = 0.3f;
+
 
     // If the record if child of "Equip Record Transform"
-    public static float RecordHandlingSize { get; private set; } = 0.45f;
+    public static float RecordCoverHandlingSize { get; private set; } = 0.45f;
+
+
+    // If the record if child of "Equip Record Transform"
+    public static float RecordDiskSpawnedSize { get; private set; } = 0.88f;
+
 
     // For spawning in record
-    public static float RecordDraggingSize { get; private set; } = 0.27f;
+    public static float RecordDiskDraggingSize { get; private set; } = 0.54f; // IF NOT PARENTED: 0.27f; IF PARENTED: 0.54f
+
 
     // For vinyl cover
     public static int OnShelfSortingOrder { get; private set; } = 0;
     public static int EquippedSortingOrder { get; private set; } = 5;
 
+
     // For vinyl record
     public static int SpawnedInSortingOrder { get; private set; } = 4;
     public static int PlaySortingOrder { get; private set; } = 2;
+    public static Dictionary<Sorter, List<GameObject>> SorterDictionary = new Dictionary<Sorter, List<GameObject>>();   
+
 
     // If scrolling is needed
     public static void ScrollMovement(Transform anything, float scrollSpeed)

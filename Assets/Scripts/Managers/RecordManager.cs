@@ -16,6 +16,8 @@ public class RecordManager : MonoBehaviour
     [SerializeField] private Transform hideCoverTransform;
     [Space]
     [SerializeField] private Transform vinylShelfTransform;
+    [Space]
+    [SerializeField] private Transform recordDiskContainer;
 
 
     [Header("Values")]
@@ -89,7 +91,7 @@ public class RecordManager : MonoBehaviour
 
     private IEnumerator EquippingCoroutine()
     {
-        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordCoverHandlingSize);
 
         UIManager.Instance.UpdateRecordCoverEquip(true);
         activeMovementCoroutine = null;
@@ -167,7 +169,7 @@ public class RecordManager : MonoBehaviour
 
     private IEnumerator ReturningRecordCover()
     {
-        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, transitionSpeed, Global.RecordShelfSize);
+        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, transitionSpeed, Global.RecordCoverShelfSize);
 
         CurrentVinylRecord = null;
         canEquip = true;
@@ -191,10 +193,10 @@ public class RecordManager : MonoBehaviour
             CurrentRecordGO == null)
         {
             GameObject recordDisk = CurrentVinylRecord.RecordDisk;
-            CurrentRecordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity);
+            CurrentRecordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity, recordDiskContainer);
         }
 
-        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.RecordCoverHandlingSize);
         if (unsheathe) RecordCoverInteractable(true, CurrentRecordGO);
         else
         {
@@ -224,12 +226,12 @@ public class RecordManager : MonoBehaviour
         if (CurrentRecordExamine != examine) 
             CurrentRecordExamine = examine;
 
-        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordCoverHandlingSize);
 
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordCoverHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
             UIManager.Instance.UpdateRecordInteraction(true);
@@ -272,7 +274,7 @@ public class RecordManager : MonoBehaviour
     {
         Vector2 destination = show ? (Vector2)ShowRecordTransform.position : (Vector2)hideRecordTransform.position;
 
-        yield return RecordCoverTransforming(destination, false, transitionSpeed, Global.RecordHandlingSize);
+        yield return RecordCoverTransforming(destination, false, transitionSpeed, Global.RecordCoverHandlingSize);
 
         activeMovementCoroutine = null;
         CurrentRecordExamine = show ? RecordExamine.Default : RecordExamine.None;

@@ -40,7 +40,7 @@ public class Record : MonoBehaviour
             SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
             RecordTrack = recordSO.track;
 
-            transform.localScale = Vector3.one * Global.RecordHandlingSize;
+            transform.localScale = Vector3.one * Global.RecordDiskSpawnedSize;
         }
     }
 

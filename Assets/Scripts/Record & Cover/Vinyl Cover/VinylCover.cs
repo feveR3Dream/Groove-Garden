@@ -47,7 +47,7 @@ public class VinylCover : MonoBehaviour
             SpriteRenderer.sprite = VinylRecordSO.frontCover;
             SpriteRenderer.sortingOrder = Global.OnShelfSortingOrder;
 
-            this.transform.localScale = Vector3.one * Global.RecordShelfSize;
+            this.transform.localScale = Vector3.one * Global.RecordCoverShelfSize;
         }
         else
         {
