@@ -92,3 +92,11 @@ public struct RecordToDrag
     public GameObject recordGO;
 }
 #endregion
+
+#region For Cursor Interaction Mode
+public enum CursorInteraction
+{
+    Record_Interaction,
+    Turntable_Interaction
+} 
+#endregion

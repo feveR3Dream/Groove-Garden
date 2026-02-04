@@ -132,7 +132,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4233678}
   - component: {fileID: 4233677}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Start Stop Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -350,8 +350,9 @@ GameObject:
   m_Component:
   - component: {fileID: 96856530}
   - component: {fileID: 96856531}
+  - component: {fileID: 96856532}
   m_Layer: 0
-  m_Name: Plinth [CONTAINER]
+  m_Name: Turntable Base [CONTAINER] [MANAGER]
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -436,6 +437,19 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &96856532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96856529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49bdc1c82201e6b49b3eb9465f92a11c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diskPlacement: {fileID: 946495720}
 --- !u!1 &120438258
 GameObject:
   m_ObjectHideFlags: 0
@@ -758,7 +772,7 @@ GameObject:
   m_Component:
   - component: {fileID: 125258937}
   - component: {fileID: 125258938}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: RPM Knob
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1542,6 +1556,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1670,6 +1685,22 @@ Transform:
   - {fileID: 1297760828}
   m_Father: {fileID: 1670482949}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56666c5a40171f54783dd416a44f42bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EventMask:
+    serializedVersion: 2
+    m_Bits: 128
+  m_MaxRayIntersections: 100
 --- !u!1 &540580066
 GameObject:
   m_ObjectHideFlags: 0
@@ -2625,7 +2656,7 @@ GameObject:
   m_Component:
   - component: {fileID: 727998765}
   - component: {fileID: 727998764}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Reverb Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2975,7 +3006,7 @@ GameObject:
   m_Component:
   - component: {fileID: 826642377}
   - component: {fileID: 826642378}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Power Knob
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3090,8 +3121,9 @@ GameObject:
   m_Component:
   - component: {fileID: 946495721}
   - component: {fileID: 946495722}
-  m_Layer: 0
-  m_Name: Platter
+  - component: {fileID: 946495723}
+  m_Layer: 7
+  m_Name: Platter [DISK PLACEMENT]
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3164,6 +3196,41 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &946495723
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946495720}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 5.18
 --- !u!1 &1034947837
 GameObject:
   m_ObjectHideFlags: 0
@@ -4431,7 +4498,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1641891617}
   - component: {fileID: 1641891618}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Tonearm [BASE] [CURRENT]
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4736,7 +4803,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1724376359}
   - component: {fileID: 1724376360}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Volume Knob
   m_TagString: Untagged
   m_Icon: {fileID: 0}

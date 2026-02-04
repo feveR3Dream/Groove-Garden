@@ -15,7 +15,6 @@ public class Cursor : MonoBehaviour
     // References
     private VinylCover currentSelectedRecord = null;
     private SpriteRenderer spriteRenderer = null;
-    private Color savedColor;
     private Camera cam;
 
     // Coroutines
@@ -134,12 +133,11 @@ public class Cursor : MonoBehaviour
         }
     }
 
-
-
     private void MouseInput()
     {
         if (Input.GetMouseButtonDown(0))
         {
+            #region RECORD INTERACTION
             Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero, 10f, recordLayer);
 
@@ -162,10 +160,16 @@ public class Cursor : MonoBehaviour
                 currentSelectedRecord.SavedColor = spriteRenderer.color;
                 Debug.Log("Hit object: " + hit.collider.gameObject.name);
             }
+            #endregion
+
+            #region TURNTABLE INTERACTION
+
+            #endregion
 
         }
         else if (Input.GetMouseButton(0))
         {
+            #region RECORD INTERACTION
             Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero, 10f, recordLayer);
 
@@ -183,10 +187,16 @@ public class Cursor : MonoBehaviour
                 currentSelectedRecord = null;
                 Debug.Log("Nothing hit at mouse position.");
             }
+            #endregion
+
+            #region TURNTABLE INTERACTION
+
+            #endregion
         }
 
         else if (Input.GetMouseButtonUp(0))
         {
+            #region RECORD INTERACTION
             if (currentSelectedRecord != null)
             {
                 Debug.Log("Selected record!");
@@ -195,6 +205,12 @@ public class Cursor : MonoBehaviour
                 currentSelectedRecord.UpdateCoverAlpha(1);
                 currentSelectedRecord = null;
             }
+            #endregion
+
+            #region TURNTABLE INTERACTION
+
+            #endregion
+
         }
     }
 }
