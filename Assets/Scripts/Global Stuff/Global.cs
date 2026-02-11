@@ -41,7 +41,7 @@ public class Global
 }
 
 
-#region For UI in General
+#region For General UI
 public enum Screen // CHECK FOR "CURRENT SCREEN"
 {
     Turntable,
@@ -50,7 +50,7 @@ public enum Screen // CHECK FOR "CURRENT SCREEN"
 #endregion
 
 
-#region For UI Buttons
+#region For Button UI
 public enum Opacity
 {
     Transparent,
@@ -96,6 +96,19 @@ public enum RecordMoveTo
 }
 #endregion
 
+#region For Turntable Settings
+public enum Power
+{
+    On,
+    Off
+}
+public enum RPM
+{
+    Slowed, 
+    Normal, 
+    SpedUp
+}
+#endregion
 
 #region For Cursor Interaction Mode
 public enum MouseButton

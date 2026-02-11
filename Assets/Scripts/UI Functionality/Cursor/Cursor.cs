@@ -13,15 +13,6 @@ public class Cursor : MonoBehaviour
     private Camera cam;
     private LayerMask targetLayerValue;
 
-    // Values
-    private Vector3 rayDir = new Vector3(0f, 0f, -10);
-
-    // Coroutines
-    private Coroutine draggingCoroutine = null;
-
-    // Scripts
-    private Record record; // This is your "Memory" of what you are holding
-
     // Interfaces
     private IButtonInteractable buttonInteractable = null;
     private IKnobInteractable knobInteractable = null;

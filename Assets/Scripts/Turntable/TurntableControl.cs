@@ -1,5 +1,7 @@
 ﻿using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class TurntableControl : MonoBehaviour
 {
@@ -77,18 +79,27 @@ public class TurntableControl : MonoBehaviour
 
 
     // References
+    public RPM CurrentRPM { get; private set; } = RPM.Normal;
+    public Power CurrentPower { get; private set; } = Power.Off;
     private Record record;
     private Camera cam;
 
 
     // Values
     [HideInInspector] public bool EquipRecord = false; // Main values that checks music playability
-    private bool turntableOn = false; // VERY IMPORTANT
 
 
     // Coroutines
     private Coroutine powerKnobCoroutine = null;
     private Coroutine rpmKnobCoroutine = null;
+
+
+    // Scripts
+    private LightControl powerLightControl;
+    private LightControl slowedLightControl;
+    private LightControl normalLightControl;
+    private LightControl spedUpLightControl;
+
 
 
     private void Awake()
@@ -102,22 +113,31 @@ public class TurntableControl : MonoBehaviour
 
         cam = Camera.main;
 
-        // Add Button Component
+        // Add ButtonControl Component
         if (platter != null) platter.AddComponent<ButtonControl>();
         if (startStopButton != null) startStopButton.AddComponent<ButtonControl>();
         if (reverbButton != null) reverbButton.AddComponent<ButtonControl>();
 
-        // Add Knob Component
+        // Add KnobControl Component
         if (tonearm != null) tonearm.AddComponent<KnobControl>(); 
         if (powerKnob != null) powerKnob.AddComponent<KnobControl>(); 
         if (rpmKnob != null) rpmKnob.AddComponent<KnobControl>(); 
         if (volumeKnob != null) volumeKnob.AddComponent<KnobControl>();
+
+        // Add LightControl Component
+        if (powerLight != null) { powerLight.AddComponent<LightControl>(); powerLightControl = powerLight.GetComponent<LightControl>();  }
+        if (slowedLight != null) { slowedLight.AddComponent<LightControl>(); slowedLightControl = slowedLight.GetComponent<LightControl>(); }
+        if (normalLight != null) { normalLight.AddComponent<LightControl>(); normalLightControl = normalLight.GetComponent<LightControl>(); }
+        if (spedUpLight != null) { spedUpLight.AddComponent<LightControl>(); spedUpLightControl = spedUpLight.GetComponent<LightControl>(); }
 
         // Initialization
         InitializeKnobAngle(tonearm, minTonearmAngle);
         InitializeKnobAngle(powerKnob, powerOffKnobAngle);
         InitializeKnobAngle(rpmKnob, normalRPMKnobAngle);
         InitializeKnobAngle(volumeKnob, maxVolumeKnobAngle);
+
+        UpdatePowerStatus(CurrentPower);
+        UpdateRPMStatus(CurrentRPM);
     }
 
 
@@ -171,8 +191,6 @@ public class TurntableControl : MonoBehaviour
         }
         #endregion
     }
-
-
     private void RecordInteraction() // For moving record in/out of the turntable
     {
         if (RecordManager.Instance.CurrentVinylRecord != null &&
@@ -200,6 +218,7 @@ public class TurntableControl : MonoBehaviour
     }
 
 
+
     public void KnobDown(KnobControl knobControl)
     {
         #region TONEARM 
@@ -212,17 +231,6 @@ public class TurntableControl : MonoBehaviour
             knobControl.StopResetRotation();
         }
         #endregion
-
-        // NEXT MISSION HERE
-
-        //#region POWER KNOB
-        //else if (knobControl.gameObject == powerKnob)
-        //{
-        //    // Add something here in the future
-        //}
-
-        //#endregion
-
 
         knobControl.SetAngleOffset();
     }
@@ -240,6 +248,8 @@ public class TurntableControl : MonoBehaviour
         else if (knobControl.gameObject == powerKnob)
         {
             knobControl.UpdateRotationClamped(knobControl.gameObject, powerOffKnobAngle, powerOnKnobAngle, rotationSpeed);
+
+            UpdatePowerStatus(CurrentPower);
         }
         #endregion
 
@@ -248,6 +258,9 @@ public class TurntableControl : MonoBehaviour
         else if (knobControl.gameObject == rpmKnob)
         {
             knobControl.UpdateRotationClamped(knobControl.gameObject, slowedRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
+
+            TargetRPMRotation(knobControl.gameObject, slowedRPMKnobAngle, normalRPMKnobAngle, spedUpRPMKnobAngle);
+            UpdateRPMStatus(CurrentRPM);
         }
         #endregion
 
@@ -296,6 +309,7 @@ public class TurntableControl : MonoBehaviour
         else if (knobControl.gameObject == powerKnob)
         {
             ProcessPowerKnob(powerKnob, powerOffKnobAngle, powerOnKnobAngle, rotationSpeed);
+            UpdatePowerStatus(CurrentPower);
         }
         #endregion
 
@@ -304,13 +318,14 @@ public class TurntableControl : MonoBehaviour
         else if (knobControl.gameObject == rpmKnob)
         {
             ProcessRPMKnob(rpmKnob, slowedRPMKnobAngle, normalRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
+            UpdateRPMStatus(CurrentRPM);
         }
         #endregion
     }
 
 
     // POWER KNOB FUNCTIONALITY
-    private void ProcessPowerKnob(GameObject powerKnobGO, float minAngle, float maxAngle, float rotationSpeed)
+    private void ProcessPowerKnob(GameObject powerKnobGO, float offAngle, float onAngle, float rotationSpeed)
     {
         if (powerKnobCoroutine != null)
         {
@@ -318,17 +333,11 @@ public class TurntableControl : MonoBehaviour
             powerKnobCoroutine = null;
         }
 
-        powerKnobCoroutine = StartCoroutine(ProcessingPowerKnob(powerKnobGO, minAngle, maxAngle, rotationSpeed));
+        powerKnobCoroutine = StartCoroutine(ProcessingPowerKnob(powerKnobGO, offAngle, onAngle, rotationSpeed));
     }
-    private IEnumerator ProcessingPowerKnob(GameObject powerKnobGO, float minAngle, float maxAngle, float rotationSpeed)
+    private IEnumerator ProcessingPowerKnob(GameObject powerKnobGO, float offAngle, float onAngle, float rotationSpeed)
     {
-        KnobControl knobControl = powerKnobGO.GetComponent<KnobControl>();
-        float currentAngle = knobControl.NormalizeClockwise(-powerKnobGO.transform.eulerAngles.z);
-
-        float toMin = Mathf.Abs(Mathf.DeltaAngle(currentAngle, minAngle));
-        float toMax = Mathf.Abs(Mathf.DeltaAngle(currentAngle, maxAngle));
-
-        float targetAngle = toMin < toMax ? minAngle : maxAngle;
+        float targetAngle = KnobIsOffAngle(powerKnobGO, offAngle, onAngle) ? offAngle : onAngle;
         Quaternion targetRot = Quaternion.Euler(0f, 0f, -targetAngle);
 
         while (Quaternion.Angle(powerKnobGO.transform.rotation, targetRot) > 0.1f)
@@ -342,9 +351,49 @@ public class TurntableControl : MonoBehaviour
             yield return null;
         }
 
+        UpdatePowerStatus(CurrentPower);
+
         powerKnobGO.transform.rotation = targetRot;
         powerKnobCoroutine = null;
     }
+    private void UpdatePowerStatus(Power currentPower)  // Turntable power system power handler
+    {
+        if (currentPower == Power.Off) 
+        {
+            powerLightControl.Renderer.color = Color.black;
+            powerLightControl.LightSetting.color = Color.black;
+        }
+        else if (currentPower == Power.On)  
+        {
+            powerLightControl.Renderer.color = Color.red;
+            powerLightControl.LightSetting.color = Color.red;
+        }
+    }
+    // Helper
+    private bool KnobIsOffAngle(GameObject goRef, float minAngle, float maxAngle)
+    {
+        KnobControl knobControl = goRef.GetComponent<KnobControl>();
+        if (knobControl == null) return false;
+
+        float currentAngle = knobControl.NormalizeClockwise(-goRef.transform.eulerAngles.z);
+
+        float toMin = Mathf.Abs(Mathf.DeltaAngle(currentAngle, minAngle));
+        float toMax = Mathf.Abs(Mathf.DeltaAngle(currentAngle, maxAngle));
+
+        if (toMin < toMax)
+        {
+            CurrentPower = Power.Off;
+            ResetRPMStatus();
+        }
+        else
+        {
+            CurrentPower = Power.On;
+            UpdateRPMStatus(CurrentRPM);
+        }
+
+        return toMin < toMax;
+    }
+
 
 
     // RPM KNOB FUNCTIONALITY
@@ -369,6 +418,59 @@ public class TurntableControl : MonoBehaviour
         float spedUpAngle,
         float rotationSpeed)
     {
+        Quaternion targetRot = Quaternion.Euler(0f, 0f, -TargetRPMRotation(rpmKnobGO, slowedAngle, normalAngle, spedUpAngle));
+
+        while (Quaternion.Angle(rpmKnobGO.transform.rotation, targetRot) > 0.1f)
+        {
+            rpmKnobGO.transform.rotation =
+                Quaternion.Lerp(
+                    rpmKnobGO.transform.rotation,
+                    targetRot,
+                    rotationSpeed * Time.deltaTime);
+
+            yield return null;
+        }
+
+        rpmKnobGO.transform.rotation = targetRot;
+        rpmKnobCoroutine = null;
+    }
+    private void UpdateRPMStatus(RPM currentRPM)
+    {
+        if (CurrentPower == Power.On)
+        {
+            ResetRPMStatus();
+
+            // Light Setting
+            if (currentRPM == RPM.Slowed)
+            {
+                slowedLightControl.LightSetting.color = Color.red;
+                slowedLightControl.Renderer.color = Color.red;
+            }
+            else if (currentRPM == RPM.Normal)
+            {
+                normalLightControl.LightSetting.color = Color.red;
+                normalLightControl.Renderer.color = Color.red;
+            }
+            else if (currentRPM == RPM.SpedUp)
+            {
+                spedUpLightControl.LightSetting.color = Color.red;
+                spedUpLightControl.Renderer.color = Color.red;
+            }
+        }
+    }
+    private void ResetRPMStatus()
+    {
+        slowedLightControl.LightSetting.color = Color.black;
+        slowedLightControl.Renderer.color = Color.black;
+
+        normalLightControl.LightSetting.color = Color.black;
+        normalLightControl.Renderer.color = Color.black;
+
+        spedUpLightControl.LightSetting.color = Color.black;
+        spedUpLightControl.Renderer.color = Color.black;
+    }
+    private float TargetRPMRotation(GameObject rpmKnobGO, float slowedAngle, float normalAngle, float spedUpAngle)
+    {
         KnobControl knobControl = rpmKnobGO.GetComponent<KnobControl>();
         float currentAngle = knobControl.NormalizeClockwise(-rpmKnobGO.transform.eulerAngles.z);
 
@@ -392,23 +494,13 @@ public class TurntableControl : MonoBehaviour
             targetAngle = spedUpAngle;
         }
 
-        Quaternion targetRot = Quaternion.Euler(0f, 0f, -targetAngle);
-
-        while (Quaternion.Angle(rpmKnobGO.transform.rotation, targetRot) > 0.1f)
-        {
-            rpmKnobGO.transform.rotation =
-                Quaternion.Lerp(
-                    rpmKnobGO.transform.rotation,
-                    targetRot,
-                    rotationSpeed * Time.deltaTime);
-
-            yield return null;
-        }
-
-        rpmKnobGO.transform.rotation = targetRot;
-        rpmKnobCoroutine = null;
+        // Light Settings
+        if (targetAngle == slowedAngle) CurrentRPM = RPM.Slowed;
+        else if (targetAngle == normalAngle) CurrentRPM = RPM.Normal;
+        else if (targetAngle == spedUpAngle) CurrentRPM = RPM.SpedUp;
+        
+        return targetAngle;
     }
-
 
 
     private void OnDrawGizmos()
@@ -450,242 +542,5 @@ public class TurntableControl : MonoBehaviour
         Vector2 maxVolumeKnobDir = new Vector2(Mathf.Cos(-(maxVolumeKnobAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(maxVolumeKnobAngle + 90f) * Mathf.Deg2Rad));
         Gizmos.DrawLine((Vector2)volumeKnob.transform.position, (Vector2)volumeKnob.transform.position + maxVolumeKnobDir * 2.5f);
         #endregion
-    }
-}
-
-
-
-public class ButtonControl : MonoBehaviour, IButtonInteractable
-{
-
-    // References
-    public SpriteRenderer Renderer { get; private set; }
-
-
-    // Values
-    public bool TurnedOn { get; private set; } = false;
-    private Color orgColor;
-    public float PressedSize { get; private set; } = 0.9f;
-    public float IdleSizeON { get; private set; } = 0.95f;
-    public float IdleSizeOFF { get; private set; } = 1f;
-    public float ResizeSpeed { get; private set; } = 50f;
-
-
-    // Coroutines
-    private Coroutine resizeCoroutine = null;
-
-
-    private void Awake()
-    {
-        Renderer = GetComponent<SpriteRenderer>();
-        orgColor = Renderer.color;
-    }
-
-
-    public void UpdateButtonAlpha(float alpha)
-    {
-        alpha = Mathf.Clamp01(alpha);
-
-        Color tempColor = orgColor;
-        tempColor.a = alpha;
-        Renderer.color = tempColor;
-    }
-
-
-    public void UpdateButtonSize(float size, float resizeSpeed)
-    {
-        Vector3 targetSize = Vector3.one * size;
-
-        if (resizeCoroutine != null)
-        {
-            StopCoroutine(resizeCoroutine);
-            resizeCoroutine = null;
-        }
-
-        resizeCoroutine = StartCoroutine(ResizingCover(targetSize, resizeSpeed));
-    }
-
-
-    public IEnumerator ResizingCover(Vector3 targetSize, float resizeSpeed)
-    {
-        while (!Mathf.Approximately(transform.localScale.magnitude, targetSize.magnitude))
-        {
-            Vector3 tempScale = Vector3.Lerp(transform.localScale, targetSize, resizeSpeed * Time.deltaTime);
-            transform.localScale = tempScale;
-
-            yield return null;
-        }
-
-        transform.localScale = targetSize;
-        resizeCoroutine = null;
-    }
-
-
-    public void ButtonInteracted(bool registered, MouseButton mouseButton)
-    {
-        if (mouseButton == MouseButton.Down)
-        {
-            TurntableControl.Instance.ButtonDown(this);
-        }
-        else if (mouseButton == MouseButton.Hold)
-        {
-            TurntableControl.Instance.ButtonHold(this);
-        }
-        else if (mouseButton == MouseButton.Up)
-        {
-            TurntableControl.Instance.ButtonUp(this);
-
-            if (registered) TurnedOn = !TurnedOn;
-        }
-    }
-}
-
-
-
-public class KnobControl : MonoBehaviour, IKnobInteractable
-{
-    // References
-    public SpriteRenderer Renderer { get; private set; }
-    private Camera cam;
-
-
-    // Values
-    private float angleOffset;
-    private Color orgColor;
-
-
-    // Coroutines
-    private Coroutine resetCoroutine = null;
-
-
-    private void Awake()
-    {
-        cam = Camera.main;
-        Renderer = GetComponent<SpriteRenderer>();
-
-        if (Renderer != null)
-            orgColor = Renderer.color;
-    }
-
-
-    public void SetAngleOffset()
-    {
-        Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 mouseDir = (mousePos - (Vector2)transform.position).normalized;
-        Vector2 selfDir = -(Vector2)transform.up;
-
-        angleOffset = Vector2.SignedAngle(selfDir, mouseDir);
-    }
-
-
-    public void UpdateRotationClamped(GameObject goRef, float minAngle, float maxAngle, float rotationSpeed)
-    {
-        Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (mousePos - (Vector2)goRef.transform.position).normalized;
-
-        float rawAngle =
-            -Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f + angleOffset;
-
-        float clockwiseAngle = NormalizeClockwise(rawAngle);
-        float clampedAngle = ClampAngleCircular(clockwiseAngle, minAngle, maxAngle);
-
-        Quaternion target = Quaternion.Euler(0f, 0f, -clampedAngle);
-        goRef.transform.rotation = Quaternion.Lerp(goRef.transform.rotation, target, rotationSpeed * Time.deltaTime);
-
-    }
-
-
-    public void UpdateRotation(GameObject goRef, float rotationSpeed)
-    {
-        Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (mousePos - (Vector2)goRef.transform.position).normalized;
-
-        float rawAngle =
-            -Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f + angleOffset;
-
-        float clockwiseAngle = NormalizeClockwise(rawAngle);
-
-        Quaternion target = Quaternion.Euler(0f, 0f, -clockwiseAngle);
-        goRef.transform.rotation = Quaternion.Lerp(goRef.transform.rotation, target, rotationSpeed * Time.deltaTime);
-    }
-
-
-    public void StopResetRotation()
-    {
-        if (resetCoroutine != null)
-        {
-            StopCoroutine(resetCoroutine);
-            resetCoroutine = null;
-        }
-    }
-    public void ResetRotation(GameObject goRef, float resetAngle, float rotationSpeed)
-    {
-        StopResetRotation();
-        resetCoroutine = StartCoroutine(ResettingRotation(goRef, resetAngle, rotationSpeed));
-    }
-    private IEnumerator ResettingRotation(GameObject goRef, float resetAngle, float rotationSpeed)
-    {
-        Quaternion targetRotation = Quaternion.Euler(0f, 0f, -resetAngle);
-
-        while (Quaternion.Angle(goRef.transform.rotation, targetRotation) > 0.1f)
-        {
-            Debug.Log($"Value: {NormalizeClockwise(-goRef.transform.eulerAngles.z)}");
-            goRef.transform.rotation = Quaternion.Lerp(goRef.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            yield return null;
-        }
-
-        goRef.transform.rotation = targetRotation;
-        resetCoroutine = null;
-    }
-
-
-
-    // FOR EVERY KNOB RELATED FUNCTIONALITY
-    public float NormalizeClockwise(float angle)
-    {
-        angle %= 360f;
-        if (angle < 0) angle += 360f;
-        return angle;
-    }
-
-
-    // FOR CLAMPING BETWEEN MIN & MAX ANGLE
-    public float ClampAngleCircular(float angle, float min, float max)
-    {
-        if (IsAngleBetween(angle, min, max))
-            return angle;
-
-        float toMin = Mathf.Abs(Mathf.DeltaAngle(angle, min));
-        float toMax = Mathf.Abs(Mathf.DeltaAngle(angle, max));
-
-        return toMin < toMax ? min : max;
-    }
-    public bool IsAngleBetween(float angle, float min, float max)
-    {
-        if (min <= max)
-            return angle >= min && angle <= max;
-
-        // Wrap-around case (ex: 300 → 40)
-        return angle >= min || angle <= max;
-    }
-
-
-    public void UpdateKnobAlpha(float alpha)
-    {
-        alpha = Mathf.Clamp01(alpha);
-
-        Color temp = orgColor;
-        temp.a = alpha;
-        Renderer.color = temp;
-    }
-
-    public void KnobInteracted(MouseButton mouseButton)
-    {
-        if (mouseButton == MouseButton.Down)
-            TurntableControl.Instance.KnobDown(this);
-        else if (mouseButton == MouseButton.Hold)
-            TurntableControl.Instance.KnobHold(this);
-        else if (mouseButton == MouseButton.Up)
-            TurntableControl.Instance.KnobUp(this);
     }
 }
