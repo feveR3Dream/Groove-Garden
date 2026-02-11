@@ -16,7 +16,7 @@ public class Global
 
 
     // For spawning in record
-    public static float RecordDiskDraggingSize { get; private set; } = 0.54f; // IF NOT PARENTED: 0.27f; IF PARENTED: 0.54f
+    public static float RecordDiskHandlingSize { get; private set; } = 0.54f; // IF NOT PARENTED: 0.27f; IF PARENTED: 0.54f
 
 
     // For vinyl cover
@@ -26,7 +26,7 @@ public class Global
 
     // For vinyl record
     public static int SpawnedInSortingOrder { get; private set; } = 4;
-    public static int PlaySortingOrder { get; private set; } = 2;
+    public static int HandlingSortingOrder { get; private set; } = 2;
     public static Dictionary<Sorter, List<GameObject>> SorterDictionary = new Dictionary<Sorter, List<GameObject>>();   
 
 
@@ -39,6 +39,7 @@ public class Global
         anything.Translate(Vector3.up * movementAmount);
     }
 }
+
 
 #region For UI in General
 public enum Screen // CHECK FOR "CURRENT SCREEN"
@@ -87,16 +88,20 @@ public enum RecordSide
     Back
 }
 
-public struct RecordToDrag
+public enum RecordMoveTo
 {
-    public GameObject recordGO;
+    To_Mouse,
+    To_Turntable,
+    To_Spawned_Pos
 }
 #endregion
 
+
 #region For Cursor Interaction Mode
-public enum CursorInteraction
+public enum MouseButton
 {
-    Record_Interaction,
-    Turntable_Interaction
+    Down,
+    Hold,
+    Up,
 } 
 #endregion

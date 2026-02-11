@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class VinylCover : MonoBehaviour
+public class VinylCover : MonoBehaviour, IButtonInteractable
 {
     public Vector2 OrgPosition { get; private set; }
 
@@ -15,11 +15,6 @@ public class VinylCover : MonoBehaviour
     // References
     public SpriteRenderer SpriteRenderer { get; private set; }
     private Color savedColor;
-    public Color SavedColor
-    {
-        get { return savedColor; }
-        set { savedColor = value; }
-    }
 
 
     // Coroutines
@@ -56,11 +51,11 @@ public class VinylCover : MonoBehaviour
     }
 
 
-    public void UpdateCoverAlpha(float alpha)
+    private void UpdateCoverAlpha(float alpha)
     {
         alpha = Mathf.Clamp01(alpha);
 
-        Color tempColor = SavedColor;
+        Color tempColor = savedColor;
         tempColor.a = alpha;
         SpriteRenderer.color = tempColor;
     }
@@ -98,5 +93,33 @@ public class VinylCover : MonoBehaviour
     {
         if (isFront) SpriteRenderer.sprite = VinylRecordSO.frontCover;
         else SpriteRenderer.sprite = VinylRecordSO.backCover;
+    }
+
+
+    public void ButtonInteracted(bool registered, MouseButton mouseButton)
+    {
+        if (mouseButton == MouseButton.Down)
+        {
+            if (RecordManager.Instance.CurrentVinylRecord != null) return;
+            savedColor = SpriteRenderer.color;
+        }
+
+        else if (mouseButton == MouseButton.Hold)
+        {
+            if (RecordManager.Instance.CurrentVinylRecord != null) return;
+            UpdateCoverAlpha(0.75f);
+        }
+
+        else if (mouseButton == MouseButton.Up)
+        {
+            if (RecordManager.Instance.CurrentVinylRecord != null) return;
+            UpdateCoverAlpha(1f);
+
+            if (registered)
+            {
+                RecordManager.Instance.EquipRecordCover(this);
+            }
+        } 
+
     }
 }

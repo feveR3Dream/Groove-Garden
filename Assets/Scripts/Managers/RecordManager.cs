@@ -6,7 +6,7 @@ public class RecordManager : MonoBehaviour
 {
     public static RecordManager Instance { get; private set; }
     public VinylCover CurrentVinylRecord { get; private set; } = null;
-
+    
 
     [Header("References")]
     [SerializeField] private Transform bottomCamLimit;
@@ -21,16 +21,17 @@ public class RecordManager : MonoBehaviour
 
 
     [Header("Values")]
-    [SerializeField] private float offset;
-    [SerializeField] private float transitionSpeed = 5f;
-    [SerializeField] private float unsheatheSpeed = 5f;
-
+    [SerializeField] private float offset; // For record cover placement adjustment
+    [SerializeField] private float coverMoveSpeed = 5f; // Speed specifically for cover movement
+    [SerializeField] private float unsheatheSpeed = 5f; // Speed specifically for unsheathing record
+    [SerializeField] private float recordMoveSpeed = 20f; // Speed specifically for moving record 
+    public float RecordMoveSpeed => recordMoveSpeed;
 
     // References
     public RecordExamine CurrentRecordExamine { get; private set; } = RecordExamine.None;
     public RecordSide CurrentRecordSide { get; private set; } = RecordSide.Front;
     public RecordToggle CurrentRecordToggle { get; private set; } = RecordToggle.Hide;
-    public GameObject CurrentRecordGO { get; private set; } = null;   // MAKE THIS GET, PRIVATE SET
+    public Record CurrentRecord { get; private set; } = null;   // MAKE THIS GET, PRIVATE SET
     public Transform ShowRecordTransform { get; private set; }
 
     private Camera cam;
@@ -38,6 +39,7 @@ public class RecordManager : MonoBehaviour
 
 
     // Values
+    public bool RecordMoveable { get; private set; } = false;
     private bool canEquip = true;
     private int orgSortingOrder = 0;
 
@@ -69,8 +71,6 @@ public class RecordManager : MonoBehaviour
         }
     }
 
-
-
     // Pick up record from selection screen
     public void EquipRecordCover(VinylCover record)
     {
@@ -81,19 +81,17 @@ public class RecordManager : MonoBehaviour
         canEquip = false;
         CurrentVinylRecord = record;
         CurrentVinylRecord.transform.SetParent(hideRecordTransform);
-
         CurrentVinylRecord.SpriteRenderer.sortingOrder = Global.EquippedSortingOrder;
-        //spriteRenderer = CurrentVinylRecord.GetComponent<SpriteRenderer>();
-        //if (spriteRenderer) spriteRenderer.sortingOrder = equippedSortingOrder;
 
         activeMovementCoroutine = StartCoroutine(EquippingCoroutine());
     }
 
     private IEnumerator EquippingCoroutine()
     {
-        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.RecordCoverHandlingSize);
 
         UIManager.Instance.UpdateRecordCoverEquip(true);
+        UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to access vinyl cover");
         activeMovementCoroutine = null;
     }
 
@@ -107,15 +105,15 @@ public class RecordManager : MonoBehaviour
 
         activeMovementCoroutine = StartCoroutine(RecordCoverTransitioning(direction, CurrentRecordExamine));
     }
-
     private IEnumerator RecordCoverTransitioning(Direction direction, RecordExamine examine)
     {
-        UIManager.Instance.UpdateRecordInteraction(false);
+        UIManager.Instance.LeftRightCoverInspectButtonEnable(false);
 
         if (direction == Direction.Left)
         {
             if (examine == RecordExamine.Default)
             {
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to flip back vinyl record");
                 CurrentRecordExamine = RecordExamine.Info;
                 CurrentRecordSide = RecordSide.Back;
             }
@@ -124,12 +122,13 @@ public class RecordManager : MonoBehaviour
         {
             CurrentRecordSide = RecordSide.Front;
 
-            if (examine == RecordExamine.Info)
-                CurrentRecordExamine = RecordExamine.Default;
-            else if (examine == RecordExamine.Default)
+            if (examine == RecordExamine.Default)
             {
                 if (UIManager.Instance.CurrentScreen == Screen.Turntable)
+                {
+                    UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to sheathe back record in cover");
                     CurrentRecordExamine = RecordExamine.Unsheathe;
+                }
                 else if (UIManager.Instance.CurrentScreen == Screen.Selection)
                     CurrentRecordExamine = RecordExamine.Return;
             }
@@ -166,10 +165,9 @@ public class RecordManager : MonoBehaviour
 
         activeMovementCoroutine = StartCoroutine(ReturningRecordCover());
     }
-
     private IEnumerator ReturningRecordCover()
     {
-        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, transitionSpeed, Global.RecordCoverShelfSize);
+        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, coverMoveSpeed, Global.RecordCoverShelfSize);
 
         CurrentVinylRecord = null;
         canEquip = true;
@@ -183,61 +181,71 @@ public class RecordManager : MonoBehaviour
     }
 
 
+
     // Like the name implies, take the cover off to reveal disk
-    private IEnumerator UnsheathingRecordToggle(bool unsheathe)    // FIX THIS LATER
+    private IEnumerator UnsheathingRecordToggle(bool unsheathe)
     {
         Vector2 targetPos = unsheathe ? (Vector2) hideCoverTransform.position : (Vector2) ShowRecordTransform.position;
-        if (!unsheathe) RecordCoverInteractable(false, CurrentRecordGO);
+        if (!unsheathe)
+        {
+            if (CurrentRecord != null)
+                CurrentRecord.MoveTo(RecordMoveTo.To_Spawned_Pos, RecordMoveSpeed);
+        }
 
         if (CurrentVinylRecord.RecordDisk != null &&
-            CurrentRecordGO == null)
+            CurrentRecord == null)
         {
             GameObject recordDisk = CurrentVinylRecord.RecordDisk;
-            CurrentRecordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity, recordDiskContainer);
+            GameObject recordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity, recordDiskContainer);
+
+            CurrentRecord = recordGO.GetComponent<Record>();
         }
 
         yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.RecordCoverHandlingSize);
-        if (unsheathe) RecordCoverInteractable(true, CurrentRecordGO);
+
+        if (unsheathe)
+        {
+            if (CurrentRecord != null)
+                CurrentRecord.MoveTo(RecordMoveTo.To_Mouse, RecordMoveSpeed);
+        }
         else
         {
             CurrentRecordExamine = RecordExamine.Default;
 
-            UIManager.Instance.UpdateRecordInteraction(true);
+            UIManager.Instance.LeftRightCoverInspectButtonEnable(true);
+            UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
+            UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
 
-            Destroy(CurrentRecordGO);
-            CurrentRecordGO = null;
+
+            Destroy(CurrentRecord.gameObject);
+            CurrentRecord = null;
         }
     }
-
-    
-    // Purpose is for the disk to follow mouse position
-    private void RecordCoverInteractable(bool interactable, GameObject recordGO)
-    {
-        RecordToDrag temp = new RecordToDrag
-        { 
-            recordGO = interactable ? recordGO : null
-        };
-
-        EventDispatcher.Instance.SendEvent(temp);
-    }
-
     private IEnumerator FlipRecordCover(RecordSide side, RecordExamine examine)
     {
         if (CurrentRecordExamine != examine) 
             CurrentRecordExamine = examine;
 
-        yield return RecordCoverTransforming(Vector2.zero, true, transitionSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.RecordCoverHandlingSize);
 
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, transitionSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, coverMoveSpeed, Global.RecordCoverHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
-            UIManager.Instance.UpdateRecordInteraction(true);
+        {
+            UIManager.Instance.LeftRightCoverInspectButtonEnable(true);
+            UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
+            UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
+        }
+
     }
 
-    public void ToggleCover()    // BOTTOM BUTTON PRESSED
+
+
+    // Bottom button pressed
+    public void ToggleCover()    
     {
         if (CurrentVinylRecord == null) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
@@ -252,11 +260,14 @@ public class RecordManager : MonoBehaviour
             if (CurrentRecordExamine == RecordExamine.Info)
             {
                 Debug.Log("Back to Default");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to hide vinyl cover");
                 activeMovementCoroutine = StartCoroutine(FlipRecordCover(RecordSide.Front, RecordExamine.Default));
             }
             else if (CurrentRecordExamine == RecordExamine.Unsheathe)
             {
                 Debug.Log("Sheathe Record and Back to Default");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to hide vinyl cover");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
                 activeMovementCoroutine = StartCoroutine(UnsheathingRecordToggle(false));
             }
             else
@@ -269,30 +280,40 @@ public class RecordManager : MonoBehaviour
             return;
         }
     }
-
     private IEnumerator TogglingRecord(bool show)
     {
         Vector2 destination = show ? (Vector2)ShowRecordTransform.position : (Vector2)hideRecordTransform.position;
-
-        yield return RecordCoverTransforming(destination, false, transitionSpeed, Global.RecordCoverHandlingSize);
-
-        activeMovementCoroutine = null;
         CurrentRecordExamine = show ? RecordExamine.Default : RecordExamine.None;
 
         if (show)
         {
             if (CurrentRecordExamine == RecordExamine.Default)
-                UIManager.Instance.UpdateRecordInteraction(true);
+            {
+                UIManager.Instance.LeftRightCoverInspectButtonEnable(true);
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to hide vinyl record");
+            }
         }
         else
         {
             CurrentVinylRecord.IsFrontCover(true);
-            UIManager.Instance.UpdateRecordInteraction(false);
+            UIManager.Instance.LeftRightCoverInspectButtonEnable(false);
+            UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to access vinyl cover");
         }
 
         UIManager.Instance.UpdateRecordCoverHidden(show);
+
+        yield return RecordCoverTransforming(destination, false, coverMoveSpeed, Global.RecordCoverHandlingSize);
+
+        activeMovementCoroutine = null;
     }
 
+
+    public void SetRecordMoveable(bool moveable)
+    {
+        this.RecordMoveable = moveable;
+    }
 
 
 

@@ -12,18 +12,18 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get;  private set; }
 
     [Header("UI Elements")]
-    public Button rightButton;   // Used mostly for transitioning
-    public Button leftButton;   //  and moving left <-> right
-    public Button bottomButton;     // Access current vinyl record
-    public Button rightRecordButton;
-    public Button leftRecordButton;
+    public Button RightButton;   // Used mostly for transitioning
+    public Button LeftButton;   //  and moving left <-> right
+    public Button BottomButton;     // Access current vinyl record
+    public Button RightRecordButton;
+    public Button LeftRecordButton;
     [Space]
-    public TextMeshProUGUI rightText;
-    public TextMeshProUGUI leftText;
-    public TextMeshProUGUI bottomText;
-    public TextMeshProUGUI rightRecordText;
-    public TextMeshProUGUI leftRecordText;
-    public TextMeshProUGUI guideText;    
+    public TextMeshProUGUI RightText;
+    public TextMeshProUGUI LeftText;
+    public TextMeshProUGUI BottomText;
+    public TextMeshProUGUI RightRecordText;
+    public TextMeshProUGUI LeftRecordText;
+    public TextMeshProUGUI GuideText;    
 
 
     [Header("Values")]
@@ -59,7 +59,7 @@ public class UIManager : MonoBehaviour
     public bool IsTransitioning { get; private set; }
 
     private const float dimTextAlpha = 0.25f;
-    private const float highlightTextAlpha = 0.5f;
+    private const float highlightTextAlpha = 0.75f;
 
     private Vector2 turntableScreenPos;
 
@@ -71,39 +71,39 @@ public class UIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        rightButton?.onClick.AddListener(() => Transition(Direction.Right));
-        leftButton?.onClick.AddListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.AddListener(RecordManager.Instance.ToggleCover);
-        leftRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
-        rightRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
+        RightButton?.onClick.AddListener(() => Transition(Direction.Right));
+        LeftButton?.onClick.AddListener(() => Transition(Direction.Left));
+        BottomButton?.onClick.AddListener(RecordManager.Instance.ToggleCover);
+        LeftRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
+        RightRecordButton?.onClick.AddListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
 
 
-        AddHoverListener(leftButton, 
-            () => { CurrentHoverDirection = Direction.Left; OnHover(leftButton, leftText, Color.white, highlightTextAlpha); }, 
-            () => { CurrentHoverDirection = Direction.None; OffHover(leftButton, leftText); });
-        AddHoverListener(rightButton, 
-            () => { CurrentHoverDirection = Direction.Right; OnHover(rightButton, rightText, Color.white, highlightTextAlpha); }, 
-            () => { CurrentHoverDirection = Direction.None; OffHover(rightButton, rightText); });
-        AddHoverListener(bottomButton,
-    () => { CurrentHoverDirection = Direction.None; OnHover(bottomButton, bottomText, Color.white, highlightTextAlpha); },
-    () => { CurrentHoverDirection = Direction.None; OffHover(bottomButton, bottomText); });
-        AddHoverListener(leftRecordButton,
-    () => { CurrentHoverDirection = Direction.None; OnHover(leftRecordButton, leftRecordText, Color.white, highlightTextAlpha); },
-    () => { CurrentHoverDirection = Direction.None; OffHover(leftRecordButton, leftRecordText); });
-        AddHoverListener(rightRecordButton,
-    () => { CurrentHoverDirection = Direction.None; OnHover(rightRecordButton, rightRecordText, Color.white, highlightTextAlpha); },
-    () => { CurrentHoverDirection = Direction.None; OffHover(rightRecordButton, rightRecordText); });
+        AddHoverListener(LeftButton, 
+            () => { CurrentHoverDirection = Direction.Left; OnHover(LeftButton, LeftText, Color.white, highlightTextAlpha); }, 
+            () => { CurrentHoverDirection = Direction.None; OffHover(LeftButton, LeftText); });
+        AddHoverListener(RightButton, 
+            () => { CurrentHoverDirection = Direction.Right; OnHover(RightButton, RightText, Color.white, highlightTextAlpha); }, 
+            () => { CurrentHoverDirection = Direction.None; OffHover(RightButton, RightText); });
+        AddHoverListener(BottomButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(BottomButton, BottomText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(BottomButton, BottomText); });
+        AddHoverListener(LeftRecordButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(LeftRecordButton, LeftRecordText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(LeftRecordButton, LeftRecordText); });
+        AddHoverListener(RightRecordButton,
+    () => { CurrentHoverDirection = Direction.None; OnHover(RightRecordButton, RightRecordText, Color.white, highlightTextAlpha); },
+    () => { CurrentHoverDirection = Direction.None; OffHover(RightRecordButton, RightRecordText); });
     
     }
 
 
     private void OnDisable()
     {
-        rightButton?.onClick.RemoveListener(() => Transition(Direction.Right));
-        leftButton?.onClick.RemoveListener(() => Transition(Direction.Left));
-        bottomButton?.onClick.RemoveListener(RecordManager.Instance.ToggleCover);
-        leftRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
-        rightRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
+        RightButton?.onClick.RemoveListener(() => Transition(Direction.Right));
+        LeftButton?.onClick.RemoveListener(() => Transition(Direction.Left));
+        BottomButton?.onClick.RemoveListener(RecordManager.Instance.ToggleCover);
+        LeftRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Left));
+        RightRecordButton?.onClick.RemoveListener(() => RecordManager.Instance.RecordCoverTransition(Direction.Right));
 
     }
 
@@ -120,14 +120,14 @@ public class UIManager : MonoBehaviour
 
         cam = Camera.main;
 
-        SetButtonState(rightButton, rightText, true, interaction: true);
-        SetButtonState(leftButton, leftText, false, interaction: false);
-        SetButtonState(bottomButton, bottomText, false, interaction: false);
-        SetButtonState(leftRecordButton, leftRecordText, false, interaction: false);
-        SetButtonState(rightRecordButton, rightRecordText, false, interaction: false);
+        SetButtonState(RightButton, RightText, true, interaction: true);
+        SetButtonState(LeftButton, LeftText, false, interaction: false);
+        SetButtonState(BottomButton, BottomText, false, interaction: false);
+        SetButtonState(LeftRecordButton, LeftRecordText, false, interaction: false);
+        SetButtonState(RightRecordButton, RightRecordText, false, interaction: false);
 
-        SetButtonTextContent(rightText, "Press to go to vinyl selection area");
-        guideText.gameObject.SetActive(false);
+        SetButtonTextContent(RightText, "Press to go to vinyl selection area");
+        GuideText.gameObject.SetActive(false);
     }
 
 
@@ -158,19 +158,19 @@ public class UIManager : MonoBehaviour
     {
         if (equipped)
         {
-            SetButtonState(bottomButton, bottomText, true, interaction: true);
+            SetButtonState(BottomButton, BottomText, true, interaction: true);
         }
         else
         {
-            SetButtonState(bottomButton, bottomText, false, interaction: false);
+            SetButtonState(BottomButton, BottomText, false, interaction: false);
         }
     }
 
 
-    public void UpdateRecordInteraction(bool interactable)
+    public void LeftRightCoverInspectButtonEnable(bool interactable)
     {
-        SetButtonState(leftRecordButton, leftRecordText, interactable, interaction: interactable);
-        SetButtonState(rightRecordButton, rightRecordText, interactable, interaction: interactable);
+        SetButtonState(LeftRecordButton, LeftRecordText, interactable, interaction: interactable);
+        SetButtonState(RightRecordButton, RightRecordText, interactable, interaction: interactable);
     }
 
 
@@ -179,16 +179,16 @@ public class UIManager : MonoBehaviour
         if (hide)
         {
             Debug.Log("Not Hidden");
-            SetButtonState(rightButton, rightText, false, interaction: false);
+            SetButtonState(RightButton, RightText, false, interaction: false);
             if (CurrentScreen == Screen.Selection)
-                SetButtonState(leftButton, leftText, false, interaction: false);
+                SetButtonState(LeftButton, LeftText, false, interaction: false);
         }
         else 
         {
             Debug.Log("Hidden");
-            SetButtonState(rightButton, rightText, true, interaction: true);
+            SetButtonState(RightButton, RightText, true, interaction: true);
             if (CurrentScreen == Screen.Selection)
-                SetButtonState(leftButton, leftText, true, interaction: true);
+                SetButtonState(LeftButton, LeftText, true, interaction: true);
         }
     }
 
@@ -211,9 +211,9 @@ public class UIManager : MonoBehaviour
         if (CurrentScreen == Screen.Turntable && direction == Direction.Left) yield break;
         if (CurrentScreen == Screen.Selection && direction == Direction.Right) yield break;
 
-        OffHover(leftButton, leftText);
-        OffHover(rightButton, rightText);
-        guideText.gameObject.SetActive(false);
+        OffHover(LeftButton, LeftText);
+        OffHover(RightButton, RightText);
+        GuideText.gameObject.SetActive(false);
 
         IsTransitioning = true; // move this to top if it doesn't work
 
@@ -221,9 +221,9 @@ public class UIManager : MonoBehaviour
         bool rightInteractable = false;
         bool transitioned = false;
 
-        SetButtonState(leftButton, leftText, false, interaction: false);
-        SetButtonState(rightButton, rightText, false, interaction: false);
-        SetButtonState(bottomButton, bottomText, false, interaction: false);
+        SetButtonState(LeftButton, LeftText, false, interaction: false);
+        SetButtonState(RightButton, RightText, false, interaction: false);
+        SetButtonState(BottomButton, BottomText, false, interaction: false);
 
         if (CurrentScreen == Screen.Turntable)
         {
@@ -239,7 +239,7 @@ public class UIManager : MonoBehaviour
 
                 CurrentScreen = Screen.Selection;
 
-                guideText.gameObject.SetActive(true);
+                GuideText.gameObject.SetActive(true);
 
                 leftON = true;
                 rightInteractable = false;
@@ -268,15 +268,15 @@ public class UIManager : MonoBehaviour
 
         if (transitioned)
         {
-            SetButtonState(leftButton, leftText, leftON, interaction: leftON);
-            SetButtonState(rightButton, rightText, true, interaction: true);
+            SetButtonState(LeftButton, LeftText, leftON, interaction: leftON);
+            SetButtonState(RightButton, RightText, true, interaction: true);
             if (RecordManager.Instance.CurrentVinylRecord != null)
-                SetButtonState(bottomButton, bottomText, true, interaction: true);
+                SetButtonState(BottomButton, BottomText, true, interaction: true);
 
-            SetButtonTextContent(leftText, "Hover here to move left\n\nPress to go back to turntable");
+            SetButtonTextContent(LeftText, "Hover here to move left\n\nPress to go back to turntable");
 
-            if (!rightInteractable) SetButtonTextContent(rightText, "Hover here to move right");
-            else SetButtonTextContent(rightText, "Press to go to vinyl selection area");
+            if (!rightInteractable) SetButtonTextContent(RightText, "Hover here to move right");
+            else SetButtonTextContent(RightText, "Press to go to vinyl selection area");
 
             IsTransitioning = false;
         }
@@ -285,7 +285,7 @@ public class UIManager : MonoBehaviour
     }
 
 
-    private void SetButtonTextContent(TextMeshProUGUI text, string content)
+    public void SetButtonTextContent(TextMeshProUGUI text, string content)
     {
         text.text = content;
     }
