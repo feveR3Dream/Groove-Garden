@@ -207,6 +207,8 @@ public class UIManager : MonoBehaviour
         // If camera at TURNTABLE, move right to SELECTION until condition suggest stopping
         // If camera at SELECTION, move left to TURNTABLE's position
 
+        RecordManager.Instance.StopTogglingRecord();
+
         // FIX: Stop the function immediately if the direction is invalid for the current screen.
         if (CurrentScreen == Screen.Turntable && direction == Direction.Left) yield break;
         if (CurrentScreen == Screen.Selection && direction == Direction.Right) yield break;

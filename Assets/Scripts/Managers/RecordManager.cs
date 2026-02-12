@@ -130,7 +130,9 @@ public class RecordManager : MonoBehaviour
                     CurrentRecordExamine = RecordExamine.Unsheathe;
                 }
                 else if (UIManager.Instance.CurrentScreen == Screen.Selection)
+                {
                     CurrentRecordExamine = RecordExamine.Return;
+                }
             }
         }
 
@@ -213,9 +215,12 @@ public class RecordManager : MonoBehaviour
             CurrentRecordExamine = RecordExamine.Default;
 
             UIManager.Instance.LeftRightCoverInspectButtonEnable(true);
-            UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
-            UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
 
+            if (UIManager.Instance.CurrentScreen == Screen.Turntable)
+            {
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
+            }
 
             Destroy(CurrentRecord.gameObject);
             CurrentRecord = null;
@@ -236,8 +241,12 @@ public class RecordManager : MonoBehaviour
         if (CurrentRecordExamine == RecordExamine.Default)
         {
             UIManager.Instance.LeftRightCoverInspectButtonEnable(true);
-            UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
-            UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
+
+            if (UIManager.Instance.CurrentScreen == Screen.Turntable)
+            {
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.LeftRecordText, "Press to see track info");
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
+            }
         }
 
     }
@@ -254,6 +263,13 @@ public class RecordManager : MonoBehaviour
         {
             CurrentRecordToggle = RecordToggle.Show;
             activeMovementCoroutine = StartCoroutine(TogglingRecord(true));
+
+            if (UIManager.Instance.CurrentScreen == Screen.Selection)
+            {
+                Debug.Log("Bruh 3");
+
+                UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to put back record on shelf");
+            }
         }
         else if (CurrentRecordToggle == RecordToggle.Show)
         {
@@ -308,6 +324,21 @@ public class RecordManager : MonoBehaviour
 
         activeMovementCoroutine = null;
     }
+    public void StopTogglingRecord()
+    {
+        if (activeMovementCoroutine != null)
+        {
+            StopCoroutine(activeMovementCoroutine);
+            activeMovementCoroutine = null;
+        }
+
+        if (CurrentVinylRecord != null)
+        {
+            CurrentVinylRecord.transform.parent = hideRecordTransform;
+            CurrentVinylRecord.transform.localPosition = Vector2.zero; // Reset position
+        }
+    }
+
 
 
     public void SetRecordMoveable(bool moveable)

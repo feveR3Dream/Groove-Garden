@@ -22,12 +22,12 @@ public class TurntableControl : MonoBehaviour
 
     [Header("Knob Reference")]
     [SerializeField] private GameObject powerKnob;
-    [SerializeField] private SpriteRenderer powerLight;
+    [SerializeField] private GameObject powerLight;
     [Space]
     [SerializeField] private GameObject rpmKnob;
-    [SerializeField] private SpriteRenderer slowedLight;
-    [SerializeField] private SpriteRenderer normalLight;
-    [SerializeField] private SpriteRenderer spedUpLight;
+    [SerializeField] private GameObject slowedLight;
+    [SerializeField] private GameObject normalLight;
+    [SerializeField] private GameObject spedUpLight;
     [Space]
     [SerializeField] private GameObject volumeKnob;
 
@@ -155,11 +155,11 @@ public class TurntableControl : MonoBehaviour
     {
         if (!buttonControl.TurnedOn)
         {
-            buttonControl.UpdateButtonAlpha(buttonPressedOnAlpha);
+            buttonControl.UpdateButtonAlpha(buttonPressedOnAlpha, buttonControl.AlphaFadeSpeed);
         }
         else
         {
-            buttonControl.UpdateButtonAlpha(buttonPressedOffAlpha);
+            buttonControl.UpdateButtonAlpha(buttonPressedOffAlpha, buttonControl.AlphaFadeSpeed);
         }
 
         if (buttonControl.gameObject != platter)
@@ -170,7 +170,7 @@ public class TurntableControl : MonoBehaviour
         #region FOR PLATTER
         if (buttonControl.gameObject == platter)
         {
-            buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha);
+            buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
             RecordInteraction();
         }
         #endregion
@@ -178,14 +178,14 @@ public class TurntableControl : MonoBehaviour
         #region FOR OTHERS
         else // For debug
         {
-            if (!buttonControl.TurnedOn)
+            if (buttonControl.TurnedOn )
             {
-                buttonControl.UpdateButtonAlpha(buttonIdleOnAlpha);
+                buttonControl.UpdateButtonAlpha(buttonIdleOnAlpha, buttonControl.AlphaFadeSpeed);
                 buttonControl.UpdateButtonSize(buttonControl.IdleSizeON, buttonControl.ResizeSpeed);
             }
             else
             {
-                buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha);
+                buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
                 buttonControl.UpdateButtonSize(buttonControl.IdleSizeOFF, buttonControl.ResizeSpeed);
             }
         }
@@ -229,6 +229,9 @@ public class TurntableControl : MonoBehaviour
                 platterCollider.enabled = true;
 
             knobControl.StopResetRotation();
+            knobControl.UpdateKnobAlpha(0.25f, knobControl.AlphaFadeSpeed);
+
+            interactionPoint.gameObject.SetActive(true);
         }
         #endregion
 
@@ -249,6 +252,7 @@ public class TurntableControl : MonoBehaviour
         {
             knobControl.UpdateRotationClamped(knobControl.gameObject, powerOffKnobAngle, powerOnKnobAngle, rotationSpeed);
 
+            KnobIsOffAngle(knobControl.gameObject, powerOffKnobAngle, powerOnKnobAngle);
             UpdatePowerStatus(CurrentPower);
         }
         #endregion
@@ -296,11 +300,18 @@ public class TurntableControl : MonoBehaviour
                             platterCollider.enabled = false;
                     }
 
+                    knobControl.UpdateKnobAlpha(1f, knobControl.AlphaFadeSpeed);
+
+                    interactionPoint.gameObject.SetActive(false);
+
                     return;
                 }
             }
 
             knobControl.ResetRotation(knobControl.gameObject, minTonearmAngle, rotationSpeed);
+            knobControl.UpdateKnobAlpha(1f, knobControl.AlphaFadeSpeed);
+
+            interactionPoint.gameObject.SetActive(false);
         }
         #endregion
 

@@ -38,6 +38,18 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: UI Panel
+    uniqueID: 2591902357
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Turntable & Record
+    uniqueID: 649916591
+    locked: 0
+  - name: Shelf, Covers & Album Names
+    uniqueID: 3031833615
+    locked: 0
+  - name: UI Button
+    uniqueID: 4129536043
     locked: 0

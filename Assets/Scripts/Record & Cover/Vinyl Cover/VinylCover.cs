@@ -41,6 +41,7 @@ public class VinylCover : MonoBehaviour, IButtonInteractable
         {
             SpriteRenderer.sprite = VinylRecordSO.frontCover;
             SpriteRenderer.sortingOrder = Global.OnShelfSortingOrder;
+            SpriteRenderer.sortingLayerID = SortingLayer.layers[3].id; // "Shelf, Covers & Album Names"
 
             this.transform.localScale = Vector3.one * Global.RecordCoverShelfSize;
         }

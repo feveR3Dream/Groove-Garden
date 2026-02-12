@@ -11,31 +11,52 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
 
     // Values
     public bool TurnedOn { get; private set; } = false;
-    private Color orgColor;
     public float PressedSize { get; private set; } = 0.9f;
     public float IdleSizeON { get; private set; } = 0.95f;
     public float IdleSizeOFF { get; private set; } = 1f;
-    public float ResizeSpeed { get; private set; } = 50f;
+    public float ResizeSpeed { get; private set; } = 25f;
+    public float AlphaFadeSpeed { get; private set; } = 15f;
 
 
     // Coroutines
+    private Coroutine alphaCoroutine = null;
     private Coroutine resizeCoroutine = null;
 
 
     private void Awake()
     {
         Renderer = GetComponent<SpriteRenderer>();
-        orgColor = Renderer.color;
     }
 
 
-    public void UpdateButtonAlpha(float alpha)
+    public void UpdateButtonAlpha(float targetAlpha, float alphaFadeSpeed)
     {
-        alpha = Mathf.Clamp01(alpha);
+        targetAlpha = Mathf.Clamp01(targetAlpha);
 
-        Color tempColor = orgColor;
-        tempColor.a = alpha;
-        Renderer.color = tempColor;
+        if (alphaCoroutine != null)
+        {
+            StopCoroutine(alphaCoroutine);
+            alphaCoroutine = null;
+        }
+
+        alphaCoroutine = StartCoroutine(AdjustingAlpha(targetAlpha, alphaFadeSpeed));
+    }
+    private IEnumerator AdjustingAlpha(float targetAlpha, float alphaFadeSpeed)
+    {
+        Color currentColor = Renderer.color;
+        Color targetColor = currentColor;
+        targetColor.a = targetAlpha;    
+
+        while (Mathf.Abs(currentColor.a - targetAlpha) > 0.01f)
+        {
+            currentColor = Color.Lerp(currentColor, targetColor, alphaFadeSpeed * Time.deltaTime);
+            Renderer.color = currentColor;
+
+            yield return null;
+        }
+
+        Renderer.color = targetColor;
+        alphaCoroutine = null;
     }
 
 
@@ -80,9 +101,8 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
         }
         else if (mouseButton == MouseButton.Up)
         {
-            TurntableControl.Instance.ButtonUp(this);
-
             if (registered) TurnedOn = !TurnedOn;
+            TurntableControl.Instance.ButtonUp(this);
         }
     }
 }

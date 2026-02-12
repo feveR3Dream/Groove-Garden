@@ -10,21 +10,50 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
 
     // Values
+    public float AlphaFadeSpeed { get; private set; } = 10f;
     private float angleOffset;
-    private Color orgColor;
 
 
     // Coroutines
     private Coroutine resetCoroutine = null;
+    private Coroutine alphaCoroutine = null;
 
 
     private void Awake()
     {
         cam = Camera.main;
         Renderer = GetComponent<SpriteRenderer>();
+    }
 
-        if (Renderer != null)
-            orgColor = Renderer.color;
+
+    public void UpdateKnobAlpha(float targetAlpha, float alphaFadeSpeed)
+    {
+        targetAlpha = Mathf.Clamp01(targetAlpha);
+
+        if (alphaCoroutine != null)
+        {
+            StopCoroutine(alphaCoroutine);
+            alphaCoroutine = null;
+        }
+
+        alphaCoroutine = StartCoroutine(AdjustingAlpha(targetAlpha, alphaFadeSpeed));
+    }
+    private IEnumerator AdjustingAlpha(float targetAlpha, float alphaFadeSpeed)
+    {
+        Color currentColor = Renderer.color;
+        Color targetColor = currentColor;
+        targetColor.a = targetAlpha;
+
+        while (Mathf.Abs(currentColor.a - targetAlpha) > 0.01f)
+        {
+            currentColor = Color.Lerp(currentColor, targetColor, alphaFadeSpeed * Time.deltaTime);
+            Renderer.color = currentColor;
+
+            yield return null;
+        }
+
+        Renderer.color = targetColor;
+        alphaCoroutine = null;
     }
 
 
@@ -89,7 +118,6 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
         while (Quaternion.Angle(goRef.transform.rotation, targetRotation) > 0.1f)
         {
-            Debug.Log($"Value: {NormalizeClockwise(-goRef.transform.eulerAngles.z)}");
             goRef.transform.rotation = Quaternion.Lerp(goRef.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             yield return null;
         }
@@ -127,16 +155,6 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
         // Wrap-around case (ex: 300 → 40)
         return angle >= min || angle <= max;
-    }
-
-
-    public void UpdateKnobAlpha(float alpha)
-    {
-        alpha = Mathf.Clamp01(alpha);
-
-        Color temp = orgColor;
-        temp.a = alpha;
-        Renderer.color = temp;
     }
 
     public void KnobInteracted(MouseButton mouseButton)
