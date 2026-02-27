@@ -398,6 +398,7 @@ GameObject:
   - component: {fileID: 96856531}
   - component: {fileID: 96856532}
   - component: {fileID: 96856533}
+  - component: {fileID: 96856534}
   m_Layer: 0
   m_Name: Turntable [MAIN CONTROLLER]
   m_TagString: Untagged
@@ -512,8 +513,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   rotationSpeed: 50
-  minTonearmAngle: 0
-  maxTonearmAngle: 48
+  defaultTonearmAngle: 0
+  startTonearmAngle: 17
+  endTonearmAngle: 48
   powerOffKnobAngle: 135
   powerOnKnobAngle: 225
   slowedRPMKnobAngle: 105
@@ -591,6 +593,21 @@ PolygonCollider2D:
       - {x: 7.0099998, y: -6.81}
       - {x: 7.12, y: -6.8199997}
   m_UseDelaunayMesh: 0
+--- !u!114 &96856534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96856529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f59929743db561c41939025c22ca6a7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TurnedOn: 0
+  CanPlayMusic: 0
+  UpdatedRPM: 0
 --- !u!1 &120438258
 GameObject:
   m_ObjectHideFlags: 0

@@ -18,6 +18,13 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
     public float AlphaFadeSpeed { get; private set; } = 15f;
 
 
+    // Alpha Values
+    public float ButtonPressedOnAlpha { get; private set; } = 0.75f;
+    public float ButtonPressedOffAlpha { get; private set; } = 0.5f;
+    public float ButtonIdleOnAlpha { get; private set; } = 0.6f;
+    public float ButtonIdleOffAlpha { get; private set; } = 1f;
+
+
     // Coroutines
     private Coroutine alphaCoroutine = null;
     private Coroutine resizeCoroutine = null;

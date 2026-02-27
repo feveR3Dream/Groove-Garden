@@ -4,18 +4,22 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class Record : MonoBehaviour
 {
+
     [Header("References")]
     [SerializeField] private RecordSO recordSO;
+
 
     // References
     public AudioClip RecordTrack { get; private set; }
     public SpriteRenderer SpriteRenderer { get; private set; }
     private Camera cam;
 
+
     // Values
     private Vector2 orgPosition;
     private float alphaFadeSpeed = 10f;
     private float resizeSpeed = 10f;
+
 
     // Coroutines
     private Coroutine alphaCoroutine = null;
@@ -44,6 +48,7 @@ public class Record : MonoBehaviour
         if (recordSO != null)
         {
             SpriteRenderer.sprite = recordSO.picture;
+            SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
             SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
             RecordTrack = recordSO.track;
 
@@ -125,6 +130,8 @@ public class Record : MonoBehaviour
         if (moveTo == RecordMoveTo.To_Mouse)
         {
             RecordManager.Instance.SetRecordMoveable(true);
+
+            SpriteRenderer.sortingLayerName = "Turntable & Record";
             SpriteRenderer.sortingOrder = Global.HandlingSortingOrder;
 
             UpdateRecordAlpha(0.5f, alphaFadeSpeed);
@@ -132,12 +139,16 @@ public class Record : MonoBehaviour
         }
         else if (moveTo == RecordMoveTo.To_Turntable)
         {
+            SpriteRenderer.sortingLayerName = "Turntable & Record";
+
             UpdateRecordAlpha(1f, alphaFadeSpeed);
             UpdateRecordSize(Global.RecordDiskHandlingSize, resizeSpeed);
         }
         else if (moveTo == RecordMoveTo.To_Spawned_Pos)
         {
             RecordManager.Instance.SetRecordMoveable(false);
+
+            SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
             SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
 
             TurntableControl.Instance.EquipRecord = false;

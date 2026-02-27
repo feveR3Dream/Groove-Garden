@@ -1,8 +1,8 @@
 ﻿using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
+
+[RequireComponent(typeof(TurntableInDepthSystem))]
 public class TurntableControl : MonoBehaviour
 {
     public static TurntableControl Instance { get; private set; }
@@ -42,9 +42,11 @@ public class TurntableControl : MonoBehaviour
 
     [Header("Tonearm Value")]
     [Range(0f, 360f)]
-    [SerializeField] private float minTonearmAngle;
+    [SerializeField] private float defaultTonearmAngle;
     [Range(0f, 360f)]
-    [SerializeField] private float maxTonearmAngle;
+    [SerializeField] private float startTonearmAngle;
+    [Range(0f, 360f)]
+    [SerializeField] private float endTonearmAngle;
 
 
     [Header("Power Knob")]
@@ -65,33 +67,40 @@ public class TurntableControl : MonoBehaviour
 
     [Header("Volume Knob")]
     [Range(0f, 360f)]
-    [SerializeField] private float minVolumeKnobAngle;
+    [SerializeField] private float minVolumeKnobAngle; // 0
     [Range(0f, 360f)]
-    [SerializeField] private float maxVolumeKnobAngle;
-
-
-    [Header("Values")]
-    [SerializeField] private float buttonPressedOnAlpha = 0.75f;
-    [SerializeField] private float buttonPressedOffAlpha = 0.5f;
-    [Space]
-    [SerializeField] private float buttonIdleOnAlpha = 0.6f;
-    [SerializeField] private float buttonIdleOffAlpha = 1f;
+    [SerializeField] private float maxVolumeKnobAngle; // 1
 
 
     // References
     public RPM CurrentRPM { get; private set; } = RPM.Normal;
     public Power CurrentPower { get; private set; } = Power.Off;
+    private TurntableInDepthSystem turntableSystem;
+
+
+    // REALLY IMPORTANT
     private Record record;
     private Camera cam;
 
 
     // Values
+    [HideInInspector] public bool TurnedOn = false;
+    [HideInInspector] public bool CanPlayMusic = false;
+    [HideInInspector] public bool UpdatedRPM = true;
     [HideInInspector] public bool EquipRecord = false; // Main values that checks music playability
+    private float currentRecordSpinSpeed = Global.NormalSpinSpeed;
+    private bool isPlaying = false;
+    private bool tonearmAtTheEnd = false;
 
 
-    // Coroutines
+    // Turntable Setting Coroutines
     private Coroutine powerKnobCoroutine = null;
     private Coroutine rpmKnobCoroutine = null;
+
+
+    // Playing Record & Anything Relevant Coroutines
+    private Coroutine startStopRecordCoroutine = null;
+    private Coroutine moveTonearmCoroutine = null;
 
 
     // Scripts
@@ -112,6 +121,7 @@ public class TurntableControl : MonoBehaviour
         Instance = this;
 
         cam = Camera.main;
+        turntableSystem = this.GetComponent<TurntableInDepthSystem>();
 
         // Add ButtonControl Component
         if (platter != null) platter.AddComponent<ButtonControl>();
@@ -131,10 +141,10 @@ public class TurntableControl : MonoBehaviour
         if (spedUpLight != null) { spedUpLight.AddComponent<LightControl>(); spedUpLightControl = spedUpLight.GetComponent<LightControl>(); }
 
         // Initialization
-        InitializeKnobAngle(tonearm, minTonearmAngle);
+        InitializeKnobAngle(tonearm, defaultTonearmAngle);
         InitializeKnobAngle(powerKnob, powerOffKnobAngle);
         InitializeKnobAngle(rpmKnob, normalRPMKnobAngle);
-        InitializeKnobAngle(volumeKnob, maxVolumeKnobAngle);
+        InitializeKnobAngle(volumeKnob, (maxVolumeKnobAngle + minVolumeKnobAngle) / 2);
 
         UpdatePowerStatus(CurrentPower);
         UpdateRPMStatus(CurrentRPM);
@@ -147,6 +157,12 @@ public class TurntableControl : MonoBehaviour
     }
 
 
+
+    #region CORE FUNCTIONALITIES
+    //--------------------------
+
+
+    #region BUTTON FUNCTIONALITIES
     public void ButtonDown(ButtonControl buttonControl)
     {
         // FOR FUTURE IMPLEMENTATION
@@ -155,11 +171,11 @@ public class TurntableControl : MonoBehaviour
     {
         if (!buttonControl.TurnedOn)
         {
-            buttonControl.UpdateButtonAlpha(buttonPressedOnAlpha, buttonControl.AlphaFadeSpeed);
+            buttonControl.UpdateButtonAlpha(buttonControl.ButtonPressedOnAlpha, buttonControl.AlphaFadeSpeed);
         }
         else
         {
-            buttonControl.UpdateButtonAlpha(buttonPressedOffAlpha, buttonControl.AlphaFadeSpeed);
+            buttonControl.UpdateButtonAlpha(buttonControl.ButtonPressedOffAlpha, buttonControl.AlphaFadeSpeed);
         }
 
         if (buttonControl.gameObject != platter)
@@ -170,24 +186,34 @@ public class TurntableControl : MonoBehaviour
         #region FOR PLATTER
         if (buttonControl.gameObject == platter)
         {
-            buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
+            buttonControl.UpdateButtonAlpha(buttonControl.ButtonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
             RecordInteraction();
         }
         #endregion
 
         #region FOR OTHERS
-        else // For debug
+        else 
         {
-            if (buttonControl.TurnedOn )
+            { 
+                if (buttonControl.TurnedOn)
+                {
+                    buttonControl.UpdateButtonAlpha(buttonControl.ButtonIdleOnAlpha, buttonControl.AlphaFadeSpeed);
+                    buttonControl.UpdateButtonSize(buttonControl.IdleSizeON, buttonControl.ResizeSpeed);
+                }
+                else
+                {
+                    buttonControl.UpdateButtonAlpha(buttonControl.ButtonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
+                    buttonControl.UpdateButtonSize(buttonControl.IdleSizeOFF, buttonControl.ResizeSpeed);
+                }            
+            } // Button Animation
+
+            #region FOR START STOP BUTTON
+            if (buttonControl.gameObject == startStopButton)
             {
-                buttonControl.UpdateButtonAlpha(buttonIdleOnAlpha, buttonControl.AlphaFadeSpeed);
-                buttonControl.UpdateButtonSize(buttonControl.IdleSizeON, buttonControl.ResizeSpeed);
+                StartStopRecord(isPlaying = !isPlaying);
             }
-            else
-            {
-                buttonControl.UpdateButtonAlpha(buttonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
-                buttonControl.UpdateButtonSize(buttonControl.IdleSizeOFF, buttonControl.ResizeSpeed);
-            }
+            #endregion
+
         }
         #endregion
     }
@@ -211,19 +237,27 @@ public class TurntableControl : MonoBehaviour
             else
             {
                 UIManager.Instance.UpdateRecordCoverEquip(false);
+
             }
         }
 
         Debug.Log($"Equip Record: {EquipRecord}");
     }
+    #endregion
 
 
 
+    #region KNOB FUNCTIONALITIES
     public void KnobDown(KnobControl knobControl)
     {
         #region TONEARM 
         if (knobControl.gameObject == tonearm)
         {
+            CanPlayMusic = false;
+
+            StopTonearm();
+            turntableSystem.StopRecord();
+
             Collider2D platterCollider = platter.GetComponent<Collider2D>();
             if (!platterCollider.enabled)
                 platterCollider.enabled = true;
@@ -242,7 +276,7 @@ public class TurntableControl : MonoBehaviour
         #region TONEARM
         if (knobControl.gameObject == tonearm)
         {
-            knobControl.UpdateRotationClamped(knobControl.gameObject, minTonearmAngle, maxTonearmAngle, rotationSpeed);
+            knobControl.UpdateRotationClamped(knobControl.transform, defaultTonearmAngle, endTonearmAngle, rotationSpeed);
         }
         #endregion
 
@@ -250,7 +284,7 @@ public class TurntableControl : MonoBehaviour
         #region POWER KNOB
         else if (knobControl.gameObject == powerKnob)
         {
-            knobControl.UpdateRotationClamped(knobControl.gameObject, powerOffKnobAngle, powerOnKnobAngle, rotationSpeed);
+            knobControl.UpdateRotationClamped(knobControl.transform, powerOffKnobAngle, powerOnKnobAngle, rotationSpeed);
 
             KnobIsOffAngle(knobControl.gameObject, powerOffKnobAngle, powerOnKnobAngle);
             UpdatePowerStatus(CurrentPower);
@@ -261,7 +295,7 @@ public class TurntableControl : MonoBehaviour
         #region RPM KNOB
         else if (knobControl.gameObject == rpmKnob)
         {
-            knobControl.UpdateRotationClamped(knobControl.gameObject, slowedRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
+            knobControl.UpdateRotationClamped(knobControl.transform, slowedRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
 
             TargetRPMRotation(knobControl.gameObject, slowedRPMKnobAngle, normalRPMKnobAngle, spedUpRPMKnobAngle);
             UpdateRPMStatus(CurrentRPM);
@@ -272,7 +306,8 @@ public class TurntableControl : MonoBehaviour
         #region VOLUME KNOB
         else if (knobControl.gameObject == volumeKnob)
         {
-            knobControl.UpdateRotationClamped(knobControl.gameObject, minVolumeKnobAngle, maxVolumeKnobAngle, rotationSpeed);
+            knobControl.UpdateRotationClamped(knobControl.transform, minVolumeKnobAngle, maxVolumeKnobAngle, rotationSpeed);
+            ProcessVolumeKnob(knobControl, minVolumeKnobAngle, maxVolumeKnobAngle);
         }
         #endregion
     }
@@ -291,10 +326,13 @@ public class TurntableControl : MonoBehaviour
                 {
                     if (record == null)
                     {
-                        knobControl.ResetRotation(knobControl.gameObject, minTonearmAngle, rotationSpeed);
+                        knobControl.ResetRotation(knobControl.gameObject, defaultTonearmAngle, rotationSpeed);
                     }
                     else
                     {
+                        tonearmAtTheEnd = IsTonearmAtTheEnd();
+                        CanPlayMusic = true;
+
                         Collider2D platterCollider = platter.GetComponent<Collider2D>();
                         if (platterCollider != null)
                             platterCollider.enabled = false;
@@ -308,7 +346,7 @@ public class TurntableControl : MonoBehaviour
                 }
             }
 
-            knobControl.ResetRotation(knobControl.gameObject, minTonearmAngle, rotationSpeed);
+            knobControl.ResetRotation(knobControl.gameObject, defaultTonearmAngle, rotationSpeed);
             knobControl.UpdateKnobAlpha(1f, knobControl.AlphaFadeSpeed);
 
             interactionPoint.gameObject.SetActive(false);
@@ -333,9 +371,76 @@ public class TurntableControl : MonoBehaviour
         }
         #endregion
     }
+    #endregion
 
 
-    // POWER KNOB FUNCTIONALITY
+    //--------
+    #endregion
+
+
+
+    #region IN-DEPTH SYSTEM FUNCTIONALITIES
+    //-------------------------------------
+
+    #region TONEARM FUNCTIONS
+    private void MoveTonearm()
+    {
+        if (moveTonearmCoroutine == null)
+            moveTonearmCoroutine = StartCoroutine(MovingTonearm());
+    }
+    private IEnumerator MovingTonearm()
+    { 
+        Quaternion startRotation = tonearm.transform.rotation;
+        Quaternion endRotation = Quaternion.Euler(0f, 0f, 360f - endTonearmAngle);
+
+        float totalDuration = record.RecordTrack.length;
+        float currentTimeMark = turntableSystem.VinylSpeaker.time;
+        float duration = totalDuration - currentTimeMark;
+
+        if (duration <= 0f)
+        {
+            moveTonearmCoroutine = null;
+            yield break;
+        }
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float percent = elapsedTime / duration;
+
+            tonearm.transform.rotation = Quaternion.Lerp(startRotation, endRotation, percent);
+            yield return null;
+        }
+
+        tonearm.transform.rotation = endRotation;
+        tonearmAtTheEnd = true;
+
+        moveTonearmCoroutine = null;
+    }
+
+    private void StopTonearm()
+    {
+        if (moveTonearmCoroutine != null)
+        {
+            float totalDuration = record.RecordTrack.length;
+            float currentTimeMark = turntableSystem.VinylSpeaker.time;
+            float duration = totalDuration - currentTimeMark;
+
+            Debug.Log($"Stop Track Length: {duration}");
+
+            StopCoroutine(moveTonearmCoroutine);
+            moveTonearmCoroutine = null;
+        }
+    }
+
+
+    #endregion
+
+
+
+    #region POWER KNOB FUNCTIONS
     private void ProcessPowerKnob(GameObject powerKnobGO, float offAngle, float onAngle, float rotationSpeed)
     {
         if (powerKnobCoroutine != null)
@@ -371,11 +476,17 @@ public class TurntableControl : MonoBehaviour
     {
         if (currentPower == Power.Off) 
         {
+            TurnedOn = false;
+
+            turntableSystem.StopRecord();
+
             powerLightControl.Renderer.color = Color.black;
             powerLightControl.LightSetting.color = Color.black;
         }
         else if (currentPower == Power.On)  
         {
+            TurnedOn = true;
+
             powerLightControl.Renderer.color = Color.red;
             powerLightControl.LightSetting.color = Color.red;
         }
@@ -404,10 +515,11 @@ public class TurntableControl : MonoBehaviour
 
         return toMin < toMax;
     }
+    #endregion
 
 
 
-    // RPM KNOB FUNCTIONALITY
+    #region RPM KNOB FUNCTIONS
     private void ProcessRPMKnob(GameObject rpmKnobGO,
         float slowedAngle,
         float normalAngle,
@@ -451,22 +563,32 @@ public class TurntableControl : MonoBehaviour
         {
             ResetRPMStatus();
 
-            // Light Setting
             if (currentRPM == RPM.Slowed)
             {
+                currentRecordSpinSpeed = Global.SlowedSpinSpeed;
+
+                // Light Settings
                 slowedLightControl.LightSetting.color = Color.red;
                 slowedLightControl.Renderer.color = Color.red;
             }
             else if (currentRPM == RPM.Normal)
             {
+                currentRecordSpinSpeed = Global.NormalSpinSpeed;
+
+                // Light Settings
                 normalLightControl.LightSetting.color = Color.red;
                 normalLightControl.Renderer.color = Color.red;
             }
             else if (currentRPM == RPM.SpedUp)
             {
+                currentRecordSpinSpeed = Global.SpedUpSpinSpeed;
+
+                // Light Settings
                 spedUpLightControl.LightSetting.color = Color.red;
                 spedUpLightControl.Renderer.color = Color.red;
             }
+
+            UpdatedRPM = true;
         }
     }
     private void ResetRPMStatus()
@@ -512,16 +634,139 @@ public class TurntableControl : MonoBehaviour
         
         return targetAngle;
     }
+    #endregion
+
+
+
+    #region VOLUME KNOB FUNCTIONS
+    private void ProcessVolumeKnob(KnobControl knobControl, float minVolumeAngle, float maxVolumeAngle)
+    {
+        Vector2 dir = knobControl.transform.up;
+        float rawAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+        float clockwiseAngle = knobControl.NormalizeClockwise(rawAngle);
+        float convertedAngle = 360 - clockwiseAngle; 
+
+        float volume = Mathf.InverseLerp(minVolumeAngle, maxVolumeAngle, convertedAngle);
+        turntableSystem.UpdateVolume(volume);
+    }
+    #endregion
+
+
+
+    #region START STOP BUTTON FUNCTIONS
+    private void StartStopRecord(bool play = true)
+    {
+        if (startStopRecordCoroutine != null)
+        {
+            StopCoroutine(startStopRecordCoroutine);
+            startStopRecordCoroutine = null;
+        }
+
+        if (play)
+        {
+            startStopRecordCoroutine = StartCoroutine(ProcessingRecord());
+        }
+        else
+        {            
+            if (startStopRecordCoroutine != null)
+            {
+                StopCoroutine(startStopRecordCoroutine);
+                startStopRecordCoroutine = null;
+            }
+
+            StopTonearm();
+            turntableSystem.StopRecord();
+        }
+    }
+
+    // HANDLES PLAYING TRACK FROM RECORD---<< MAIN >>
+    private IEnumerator ProcessingRecord()
+    {
+        while (true)
+        {
+            if (TurnedOn && 
+                record != null)
+            {
+                if (!tonearmAtTheEnd)
+                {
+                    turntableSystem.PlayRecord(record, currentRecordSpinSpeed);
+                    if (CanPlayMusic) MoveTonearm();
+                }
+                else
+                {
+                    turntableSystem.StopRecord();
+                    StopTonearm();
+                }
+            }
+
+            yield return null;
+        }
+    }
+
+    #endregion
+
+
+    //--------
+    #endregion
+
+
+
+    #region HELPER FUNCTIONALITIES
+    //----------------------------
+
+    
+    #region GET TRACK TIME MARK 
+    public float GetTimeMark()
+    {
+        KnobControl tonearmControl = tonearm.GetComponent<KnobControl>();
+
+        Vector2 dir = tonearm.transform.up;
+        float rawAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+        float clockwiseAngle = tonearmControl.NormalizeClockwise(rawAngle);
+        float convertedAngle = 360 - clockwiseAngle;
+
+        float percent = Mathf.InverseLerp(startTonearmAngle, endTonearmAngle, convertedAngle);
+        float recordTimeMark = record.RecordTrack.length * percent;
+
+        return recordTimeMark;
+    }
+    #endregion
+
+
+
+    #region CHECK TONEARM END AT END CONDITION
+    private bool IsTonearmAtTheEnd()
+    {
+        KnobControl tonearmControl = tonearm.GetComponent<KnobControl>();
+
+        Vector2 dir = tonearm.transform.up;
+        float rawAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+        float clockwiseAngle = tonearmControl.NormalizeClockwise(rawAngle);
+        float convertedAngle = 360 - clockwiseAngle;
+
+        float percent = Mathf.InverseLerp(startTonearmAngle, endTonearmAngle, convertedAngle);
+
+        // THE FIX: Check if we are at 99.5% or higher, instead of exactly 100%
+        return percent >= 0.995f;
+    }
+    #endregion
+
+
+    //--------
+    #endregion
 
 
     private void OnDrawGizmos()
     {
         #region TONEARM
-        Vector2 minTonearmDir = new Vector2(Mathf.Cos(-(minTonearmAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(minTonearmAngle + 90f) * Mathf.Deg2Rad));
-        Gizmos.DrawLine((Vector2)tonearm.transform.position, (Vector2)tonearm.transform.position + minTonearmDir * 2.5f);
+        Vector2 defaultTonearmDir = new Vector2(Mathf.Cos(-(defaultTonearmAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(defaultTonearmAngle + 90f) * Mathf.Deg2Rad));
+        Gizmos.DrawLine((Vector2)tonearm.transform.position, (Vector2)tonearm.transform.position + defaultTonearmDir * 2.5f);
 
-        Vector2 maxTonearmDir = new Vector2(Mathf.Cos(-(maxTonearmAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(maxTonearmAngle + 90f) * Mathf.Deg2Rad));
-        Gizmos.DrawLine((Vector2)tonearm.transform.position, (Vector2)tonearm.transform.position + maxTonearmDir * 2.5f);
+        Vector2 startTonearmDir = new Vector2(Mathf.Cos(-(startTonearmAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(startTonearmAngle + 90f) * Mathf.Deg2Rad));
+        Gizmos.DrawLine((Vector2)tonearm.transform.position, (Vector2)tonearm.transform.position + startTonearmDir * 2.5f);
+
+        Vector2 endTonearmDir = new Vector2(Mathf.Cos(-(endTonearmAngle + 90f) * Mathf.Deg2Rad), Mathf.Sin(-(endTonearmAngle + 90f) * Mathf.Deg2Rad));
+        Gizmos.DrawLine((Vector2)tonearm.transform.position, (Vector2)tonearm.transform.position + endTonearmDir * 2.5f);
         #endregion
 
 

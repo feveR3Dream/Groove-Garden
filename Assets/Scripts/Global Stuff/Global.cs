@@ -27,17 +27,18 @@ public class Global
     // For vinyl record
     public static int SpawnedInSortingOrder { get; private set; } = 4;
     public static int HandlingSortingOrder { get; private set; } = 2;
-    public static Dictionary<Sorter, List<GameObject>> SorterDictionary = new Dictionary<Sorter, List<GameObject>>();   
+    public static Dictionary<Sorter, List<GameObject>> SorterDictionary = new Dictionary<Sorter, List<GameObject>>();
 
 
-    // If scrolling is needed
-    public static void ScrollMovement(Transform anything, float scrollSpeed)
-    {
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        float movementAmount = scroll * scrollSpeed * Time.deltaTime;
+    // For playing records
+    public static float MaxInterpolationTime { get; private set; } = 1f; // Make changes to this when needed.
+    
+    public static float SpinninRecordSpeed { get; private set; } = 20f; 
+    
+    public static float SlowedSpinSpeed { get; private set; } = 10f;
+    public static float NormalSpinSpeed { get; private set; } = 25f;
+    public static float SpedUpSpinSpeed { get; private set; } = 50f;
 
-        anything.Translate(Vector3.up * movementAmount);
-    }
 }
 
 
@@ -96,6 +97,7 @@ public enum RecordMoveTo
 }
 #endregion
 
+
 #region For Turntable Settings
 public enum Power
 {
@@ -109,6 +111,7 @@ public enum RPM
     SpedUp
 }
 #endregion
+
 
 #region For Cursor Interaction Mode
 public enum MouseButton

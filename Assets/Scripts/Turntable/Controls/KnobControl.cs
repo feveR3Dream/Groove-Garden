@@ -67,10 +67,10 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
     }
 
 
-    public void UpdateRotationClamped(GameObject goRef, float minAngle, float maxAngle, float rotationSpeed)
+    public void UpdateRotationClamped(Transform transformRef, float minAngle, float maxAngle, float rotationSpeed)
     {
         Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (mousePos - (Vector2)goRef.transform.position).normalized;
+        Vector2 dir = (mousePos - (Vector2)transformRef.position).normalized;
 
         float rawAngle =
             -Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f + angleOffset;
@@ -79,7 +79,7 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
         float clampedAngle = ClampAngleCircular(clockwiseAngle, minAngle, maxAngle);
 
         Quaternion target = Quaternion.Euler(0f, 0f, -clampedAngle);
-        goRef.transform.rotation = Quaternion.Lerp(goRef.transform.rotation, target, rotationSpeed * Time.deltaTime);
+        transformRef.rotation = Quaternion.Lerp(transformRef.rotation, target, rotationSpeed * Time.deltaTime);
 
     }
 
