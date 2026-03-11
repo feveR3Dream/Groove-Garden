@@ -106,6 +106,7 @@ public enum Power
 }
 public enum RPM
 {
+    None,
     Slowed, 
     Normal, 
     SpedUp

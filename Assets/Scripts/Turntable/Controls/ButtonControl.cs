@@ -10,7 +10,7 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
 
 
     // Values
-    public bool TurnedOn { get; private set; } = false;
+    [HideInInspector] public bool TurnedOn = false;
     public float PressedSize { get; private set; } = 0.9f;
     public float IdleSizeON { get; private set; } = 0.95f;
     public float IdleSizeOFF { get; private set; } = 1f;

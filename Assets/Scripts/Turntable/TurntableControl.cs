@@ -36,8 +36,19 @@ public class TurntableControl : MonoBehaviour
     [SerializeField] private LayerMask turntableLayer;
 
 
-    [Header("Speed Value")]
+    [Header("Disk Rotation Speed Value")]
     [SerializeField] private float rotationSpeed;
+
+
+    [Header("Playback Pitch Values")]
+    [SerializeField] private float slowPitchValue;
+    public float SlowedPitchValue => slowPitchValue;
+
+    [SerializeField] private float normalPitchValue;
+    public float NormalPitchValue => normalPitchValue;  
+    
+    [SerializeField] private float spedUpPitchValue;
+    public float SpedUpPitchValue => spedUpPitchValue;
 
 
     [Header("Tonearm Value")]
@@ -73,7 +84,7 @@ public class TurntableControl : MonoBehaviour
 
 
     // References
-    public RPM CurrentRPM { get; private set; } = RPM.Normal;
+    public RPM TargetRPM { get; private set; } = RPM.Normal;
     public Power CurrentPower { get; private set; } = Power.Off;
     private TurntableInDepthSystem turntableSystem;
 
@@ -88,9 +99,20 @@ public class TurntableControl : MonoBehaviour
     [HideInInspector] public bool CanPlayMusic = false;
     [HideInInspector] public bool UpdatedRPM = true;
     [HideInInspector] public bool EquipRecord = false; // Main values that checks music playability
+   
     private float currentRecordSpinSpeed = Global.NormalSpinSpeed;
-    private bool isPlaying = false;
+    private float currentRPMPitch = 1f;
+    private RPM currentRPM = RPM.None;
+
+
+    // Start Stop Button Values
+    private bool resetStartStopButton = true;
     private bool tonearmAtTheEnd = false;
+    private bool isPlaying = false;
+
+
+    // Revern Button Values
+    private bool isReverb = false;
 
 
     // Turntable Setting Coroutines
@@ -101,6 +123,7 @@ public class TurntableControl : MonoBehaviour
     // Playing Record & Anything Relevant Coroutines
     private Coroutine startStopRecordCoroutine = null;
     private Coroutine moveTonearmCoroutine = null;
+    private Coroutine rpmPitchCoroutine = null;
 
 
     // Scripts
@@ -140,20 +163,31 @@ public class TurntableControl : MonoBehaviour
         if (normalLight != null) { normalLight.AddComponent<LightControl>(); normalLightControl = normalLight.GetComponent<LightControl>(); }
         if (spedUpLight != null) { spedUpLight.AddComponent<LightControl>(); spedUpLightControl = spedUpLight.GetComponent<LightControl>(); }
 
-        // Initialization
+        // Knob Angle Initialization
         InitializeKnobAngle(tonearm, defaultTonearmAngle);
         InitializeKnobAngle(powerKnob, powerOffKnobAngle);
         InitializeKnobAngle(rpmKnob, normalRPMKnobAngle);
         InitializeKnobAngle(volumeKnob, (maxVolumeKnobAngle + minVolumeKnobAngle) / 2);
 
+        // Turntable System Initialization
         UpdatePowerStatus(CurrentPower);
-        UpdateRPMStatus(CurrentRPM);
+        UpdateRPMStatus(TargetRPM);
+
+        // Variable Initialization
+        currentRPMPitch = NormalPitchValue;
+
     }
 
 
     private void InitializeKnobAngle(GameObject knobGO, float angleValue)
     {
         knobGO.transform.rotation = Quaternion.Euler(0f, 0f, -angleValue);
+    }
+
+
+    private void Start()
+    {
+        turntableSystem.ProcessReverb(isReverb);
     }
 
 
@@ -207,13 +241,21 @@ public class TurntableControl : MonoBehaviour
                 }            
             } // Button Animation
 
+
             #region FOR START STOP BUTTON
             if (buttonControl.gameObject == startStopButton)
             {
-                StartStopRecord(isPlaying = !isPlaying);
+                StartStopRecord(tonearmAtTheEnd = false);
             }
             #endregion
 
+
+            #region FOR REVERB BUTTON
+            if (buttonControl.gameObject == reverbButton)
+            {
+                turntableSystem.ProcessReverb(isReverb = !isReverb);
+            }
+            #endregion
         }
         #endregion
     }
@@ -298,7 +340,7 @@ public class TurntableControl : MonoBehaviour
             knobControl.UpdateRotationClamped(knobControl.transform, slowedRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
 
             TargetRPMRotation(knobControl.gameObject, slowedRPMKnobAngle, normalRPMKnobAngle, spedUpRPMKnobAngle);
-            UpdateRPMStatus(CurrentRPM);
+            UpdateRPMStatus(TargetRPM);
         }
         #endregion
 
@@ -367,7 +409,7 @@ public class TurntableControl : MonoBehaviour
         else if (knobControl.gameObject == rpmKnob)
         {
             ProcessRPMKnob(rpmKnob, slowedRPMKnobAngle, normalRPMKnobAngle, spedUpRPMKnobAngle, rotationSpeed);
-            UpdateRPMStatus(CurrentRPM);
+            UpdateRPMStatus(TargetRPM);
         }
         #endregion
     }
@@ -407,7 +449,7 @@ public class TurntableControl : MonoBehaviour
 
         while (elapsedTime < duration)
         {
-            elapsedTime += Time.deltaTime;
+            elapsedTime += Time.deltaTime * currentRPMPitch;
             float percent = elapsedTime / duration;
 
             tonearm.transform.rotation = Quaternion.Lerp(startRotation, endRotation, percent);
@@ -510,7 +552,7 @@ public class TurntableControl : MonoBehaviour
         else
         {
             CurrentPower = Power.On;
-            UpdateRPMStatus(CurrentRPM);
+            UpdateRPMStatus(TargetRPM);
         }
 
         return toMin < toMax;
@@ -557,31 +599,35 @@ public class TurntableControl : MonoBehaviour
         rpmKnobGO.transform.rotation = targetRot;
         rpmKnobCoroutine = null;
     }
-    private void UpdateRPMStatus(RPM currentRPM)
+    private void UpdateRPMStatus(RPM targetRPM)
     {
         if (CurrentPower == Power.On)
         {
-            ResetRPMStatus();
-
-            if (currentRPM == RPM.Slowed)
+            if (targetRPM == RPM.Slowed && currentRPM != RPM.Slowed)
             {
                 currentRecordSpinSpeed = Global.SlowedSpinSpeed;
+                currentRPM = RPM.Slowed;
+                UpdateRPMPitch(currentRPM);
 
                 // Light Settings
                 slowedLightControl.LightSetting.color = Color.red;
                 slowedLightControl.Renderer.color = Color.red;
             }
-            else if (currentRPM == RPM.Normal)
+            else if (targetRPM == RPM.Normal && currentRPM != RPM.Normal)
             {
                 currentRecordSpinSpeed = Global.NormalSpinSpeed;
+                currentRPM = RPM.Normal;
+                UpdateRPMPitch(currentRPM);
 
                 // Light Settings
                 normalLightControl.LightSetting.color = Color.red;
                 normalLightControl.Renderer.color = Color.red;
             }
-            else if (currentRPM == RPM.SpedUp)
+            else if (targetRPM == RPM.SpedUp && currentRPM != RPM.SpedUp)
             {
                 currentRecordSpinSpeed = Global.SpedUpSpinSpeed;
+                currentRPM = RPM.SpedUp;
+                UpdateRPMPitch(currentRPM);
 
                 // Light Settings
                 spedUpLightControl.LightSetting.color = Color.red;
@@ -591,8 +637,47 @@ public class TurntableControl : MonoBehaviour
             UpdatedRPM = true;
         }
     }
+    private void UpdateRPMPitch(RPM currentRPM)
+    {
+        ResetRPMStatus();
+
+        if (rpmPitchCoroutine != null)
+        {
+            StopCoroutine(rpmPitchCoroutine);   
+            rpmPitchCoroutine = null;
+        }
+
+        rpmPitchCoroutine = StartCoroutine(UpdatingRPMPitch(currentRPM));
+    }
+    private IEnumerator UpdatingRPMPitch(RPM currentRPM)
+    {
+        float currentTime = 0f;
+        float targetPitch;
+
+        if (currentRPM == RPM.Slowed) targetPitch = SlowedPitchValue;
+        else if (currentRPM == RPM.Normal) targetPitch = NormalPitchValue;
+        else if (currentRPM == RPM.SpedUp) targetPitch = SpedUpPitchValue;
+        else targetPitch = 1f;
+
+        while (currentTime < Global.MaxInterpolationTime)
+        {
+            currentTime += Time.deltaTime;
+            float percent = currentTime / Global.MaxInterpolationTime;
+
+            // Record playback speed
+            currentRPMPitch = Mathf.Lerp(currentRPMPitch, targetPitch, percent);
+
+            yield return null;
+        }
+
+        currentRPMPitch = targetPitch;
+        rpmPitchCoroutine = null;
+    }
+
     private void ResetRPMStatus()
     {
+        currentRPM = RPM.None;
+
         slowedLightControl.LightSetting.color = Color.black;
         slowedLightControl.Renderer.color = Color.black;
 
@@ -606,8 +691,6 @@ public class TurntableControl : MonoBehaviour
     {
         KnobControl knobControl = rpmKnobGO.GetComponent<KnobControl>();
         float currentAngle = knobControl.NormalizeClockwise(-rpmKnobGO.transform.eulerAngles.z);
-
-        Debug.Log($"Euler Angle Debug: {rpmKnobGO.transform.eulerAngles.z}");
 
         float toSlowed = Mathf.Abs(Mathf.DeltaAngle(currentAngle, slowedAngle));
         float toNormal = Mathf.Abs(Mathf.DeltaAngle(currentAngle, normalAngle));
@@ -628,9 +711,9 @@ public class TurntableControl : MonoBehaviour
         }
 
         // Light Settings
-        if (targetAngle == slowedAngle) CurrentRPM = RPM.Slowed;
-        else if (targetAngle == normalAngle) CurrentRPM = RPM.Normal;
-        else if (targetAngle == spedUpAngle) CurrentRPM = RPM.SpedUp;
+        if (targetAngle == slowedAngle) TargetRPM = RPM.Slowed;
+        else if (targetAngle == normalAngle) TargetRPM = RPM.Normal;
+        else if (targetAngle == spedUpAngle) TargetRPM = RPM.SpedUp;
         
         return targetAngle;
     }
@@ -654,7 +737,7 @@ public class TurntableControl : MonoBehaviour
 
 
     #region START STOP BUTTON FUNCTIONS
-    private void StartStopRecord(bool play = true)
+    private void StartStopRecord(bool tonearmAtEnd = false)
     {
         if (startStopRecordCoroutine != null)
         {
@@ -662,12 +745,16 @@ public class TurntableControl : MonoBehaviour
             startStopRecordCoroutine = null;
         }
 
-        if (play)
+        if (!isPlaying)
         {
+            isPlaying = true;
+
+            resetStartStopButton = true;
             startStopRecordCoroutine = StartCoroutine(ProcessingRecord());
         }
         else
-        {            
+        {
+            isPlaying = false;
             if (startStopRecordCoroutine != null)
             {
                 StopCoroutine(startStopRecordCoroutine);
@@ -676,6 +763,25 @@ public class TurntableControl : MonoBehaviour
 
             StopTonearm();
             turntableSystem.StopRecord();
+
+            // Only for when the tonearm reaches the end
+            if (tonearmAtEnd) ResetStartStopButton();
+        }
+    }
+
+    private void ResetStartStopButton()
+    {
+        if (resetStartStopButton)
+        {
+            resetStartStopButton = false;
+
+            ButtonControl btn = startStopButton.GetComponent<ButtonControl>();
+
+            isPlaying = false;
+            btn.TurnedOn = false;
+
+            btn.UpdateButtonAlpha(btn.ButtonIdleOffAlpha, btn.AlphaFadeSpeed);
+            btn.UpdateButtonSize(btn.IdleSizeOFF, btn.ResizeSpeed);
         }
     }
 
@@ -689,12 +795,13 @@ public class TurntableControl : MonoBehaviour
             {
                 if (!tonearmAtTheEnd)
                 {
-                    turntableSystem.PlayRecord(record, currentRecordSpinSpeed);
+                    turntableSystem.PlayRecord(record, currentRecordSpinSpeed, TargetRPM);
                     if (CanPlayMusic) MoveTonearm();
                 }
                 else
                 {
                     turntableSystem.StopRecord();
+                    StartStopRecord(tonearmAtTheEnd = true);
                     StopTonearm();
                 }
             }
@@ -706,6 +813,9 @@ public class TurntableControl : MonoBehaviour
     #endregion
 
 
+    
+    // REVERB FUNCTIONALITY IN TURNTABLE_IN_DEPTH_SYSTEM SCRIPT
+
     //--------
     #endregion
 
@@ -714,7 +824,7 @@ public class TurntableControl : MonoBehaviour
     #region HELPER FUNCTIONALITIES
     //----------------------------
 
-    
+
     #region GET TRACK TIME MARK 
     public float GetTimeMark()
     {

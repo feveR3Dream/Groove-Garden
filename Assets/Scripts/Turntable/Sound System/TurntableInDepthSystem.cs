@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(AudioSource), typeof(AudioReverbFilter))]
 public class TurntableInDepthSystem : MonoBehaviour
 {
 
@@ -13,6 +13,7 @@ public class TurntableInDepthSystem : MonoBehaviour
 
     // References
     public AudioSource VinylSpeaker { get; private set; }
+    public AudioReverbFilter ReverbFilter { get; private set; }
     private AudioClip currentTrack;
 
 
@@ -24,15 +25,33 @@ public class TurntableInDepthSystem : MonoBehaviour
 
     // Coroutines
     private Coroutine adjustRPMCoroutine = null;
+    private Coroutine reverbCoroutine = null;
 
 
     private void Awake()
+    {  
+        StartCoroutine(InitializingAudioComponent());
+    }
+
+    private IEnumerator InitializingAudioComponent()
     {
-        VinylSpeaker = GetComponent<AudioSource>();    
+        VinylSpeaker = GetComponent<AudioSource>();
+
+        ReverbFilter = GetComponent<AudioReverbFilter>();
+        ReverbFilter.reverbPreset = AudioReverbPreset.Generic;
+
+        yield return null;
+
+        ReverbFilter.reverbPreset = AudioReverbPreset.User;
+        ReverbFilter.reverbLevel = -10000f;
+        ReverbFilter.room = -10000f;
     }
 
 
-    public void PlayRecord(Record record, float spinSpeed)
+    #region PLAYING / STOPPING RECORD LOGIC
+    //-------------------------------------
+
+    public void PlayRecord(Record record, float spinSpeed, RPM rpm)
     {
         if (record == null) { return; }
 
@@ -42,12 +61,14 @@ public class TurntableInDepthSystem : MonoBehaviour
         if (TurntableControl.Instance.UpdatedRPM)
         {
             TurntableControl.Instance.UpdatedRPM = false;
-            ApplyNewRPM(spinSpeed);
+            ApplyNewRPM(spinSpeed, rpm);
         }
 
         recordTransform.Rotate(0f, 0f, currentSpinSpeed * Time.deltaTime);
         #endregion
 
+
+        #region PLAY MUSIC
         if (TurntableControl.Instance.CanPlayMusic)
         {
             if (!isPlayingMusic)
@@ -58,7 +79,7 @@ public class TurntableInDepthSystem : MonoBehaviour
                 PlayMusic(currentTrack, TurntableControl.Instance.GetTimeMark());
             }
         }
-
+        #endregion
     }
 
 
@@ -67,7 +88,7 @@ public class TurntableInDepthSystem : MonoBehaviour
         if (isPlayingMusic)
         {
             isPlayingMusic = false;
-            StopMusic();    
+            PauseMusic();    
         }
     }
 
@@ -75,25 +96,30 @@ public class TurntableInDepthSystem : MonoBehaviour
     // We pass the track AND the time we want to start at
     private void PlayMusic(AudioClip track, float startTimeMark)
     {
-        // 1. Give it the track first
         VinylSpeaker.clip = track;
 
-        // 2. Now that it has a track, tell it where to skip to
-        VinylSpeaker.time = startTimeMark;
+        float safeTimeMark = Mathf.Clamp(startTimeMark, 0f, track.length - 0.01f);
+        VinylSpeaker.time = safeTimeMark;
 
-        // 3. Drop the needle
         VinylSpeaker.Play();
     }
 
 
-    private void StopMusic()
+    private void PauseMusic()
     {
         if (VinylSpeaker != null)
         {
-            VinylSpeaker.Stop();
+            VinylSpeaker.Pause();
         }
     }
 
+    //--------
+    #endregion
+
+
+
+    #region TURNTABLE SETTING LOGIC
+    //-----------------------------
 
     public void UpdateVolume(float volume)
     {
@@ -101,7 +127,7 @@ public class TurntableInDepthSystem : MonoBehaviour
     }
 
 
-    private void ApplyNewRPM(float spinSpeed)
+    private void ApplyNewRPM(float spinSpeed, RPM rpm)
     {
         if (adjustRPMCoroutine != null)
         {
@@ -109,24 +135,85 @@ public class TurntableInDepthSystem : MonoBehaviour
             adjustRPMCoroutine = null;
         }
 
-        adjustRPMCoroutine = StartCoroutine(ApplyingNewRPM(spinSpeed));
+        adjustRPMCoroutine = StartCoroutine(ApplyingNewRPM(spinSpeed, rpm));
     }
-    private IEnumerator ApplyingNewRPM(float spinSpeed)
+    private IEnumerator ApplyingNewRPM(float spinSpeed, RPM rpm)
     {
         float currentTime = 0f;
+        
+        float currentPitch;
+        if (rpm == RPM.Slowed) currentPitch = TurntableControl.Instance.SlowedPitchValue;
+        else if (rpm == RPM.Normal) currentPitch = TurntableControl.Instance.NormalPitchValue;
+        else if (rpm == RPM.SpedUp) currentPitch = TurntableControl.Instance.SpedUpPitchValue;
+        else currentPitch = 1f;
+
 
         while (currentTime < Global.MaxInterpolationTime)
         {
             currentTime += Time.deltaTime;
-
             float percent = currentTime / Global.MaxInterpolationTime;
-            currentSpinSpeed = Mathf.MoveTowards(currentSpinSpeed, spinSpeed, percent);
+
+            // Disk spin speed
+            currentSpinSpeed = Mathf.Lerp(currentSpinSpeed, spinSpeed, percent);
+
+            // Track pitch (playback speed)
+            if (VinylSpeaker.clip != null)
+            {
+                VinylSpeaker.pitch = Mathf.Lerp(VinylSpeaker.pitch, currentPitch, percent);
+            }
 
             yield return null;
         }
 
         currentSpinSpeed = spinSpeed;
+        VinylSpeaker.pitch = currentPitch;
+
         adjustRPMCoroutine = null;
     }
 
+    public void ProcessReverb(bool isReverb)
+    {
+        if (reverbCoroutine != null)
+        {
+            StopCoroutine(reverbCoroutine);
+            reverbCoroutine = null;
+        }
+
+        reverbCoroutine = StartCoroutine(ProcessingReverb(isReverb));
+    }
+    private IEnumerator ProcessingReverb(bool isReverb)
+    {
+        float currentTime = 0f;
+        
+        // For Reverb Level
+        float targetReverbValue = isReverb ? 200f : -10000f;
+
+        // For 
+        float targetRoomValue = isReverb ? -1000f : -10000f;
+
+        while (currentTime < Global.MaxInterpolationTime)
+        {
+            currentTime += Time.deltaTime;
+            float percent = currentTime / Global.MaxInterpolationTime;
+
+            // Reverb Level
+            float tempReverbValue = Mathf.Lerp(ReverbFilter.reverbLevel, targetReverbValue, percent); 
+            ReverbFilter.reverbLevel = tempReverbValue;
+
+            // Room
+            float tempRoomValue = Mathf.Lerp(ReverbFilter.room, targetRoomValue, percent);
+            ReverbFilter.room = tempRoomValue;
+
+            yield return null;
+        }
+
+        ReverbFilter.reverbLevel = targetReverbValue;
+        ReverbFilter.room = targetRoomValue;
+
+        reverbCoroutine = null;
+    }
+
+
+    //--------
+    #endregion
 }
