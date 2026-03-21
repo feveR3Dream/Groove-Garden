@@ -100,16 +100,16 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
     {
         if (mouseButton == MouseButton.Down)
         {
-            TurntableControl.Instance.ButtonDown(this);
+            TurntableManager.Instance.ButtonDown(this);
         }
         else if (mouseButton == MouseButton.Hold)
         {
-            TurntableControl.Instance.ButtonHold(this);
+            TurntableManager.Instance.ButtonHold(this);
         }
         else if (mouseButton == MouseButton.Up)
         {
             if (registered) TurnedOn = !TurnedOn;
-            TurntableControl.Instance.ButtonUp(this);
+            TurntableManager.Instance.ButtonUp(this);
         }
     }
 }

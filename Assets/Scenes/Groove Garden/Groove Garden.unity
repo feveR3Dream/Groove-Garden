@@ -396,8 +396,8 @@ GameObject:
   m_Component:
   - component: {fileID: 96856530}
   - component: {fileID: 96856531}
-  - component: {fileID: 96856532}
   - component: {fileID: 96856533}
+  - component: {fileID: 96856537}
   - component: {fileID: 96856534}
   - component: {fileID: 96856535}
   - component: {fileID: 96856536}
@@ -487,51 +487,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &96856532
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 96856529}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 790701755a3cf424f9766f97fd57091b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  platter: {fileID: 946495720}
-  startStopButton: {fileID: 4233676}
-  reverbButton: {fileID: 727998763}
-  tonearm: {fileID: 1641891616}
-  interactionPoint: {fileID: 1298366607}
-  powerKnob: {fileID: 826642376}
-  powerLight: {fileID: 637445846}
-  rpmKnob: {fileID: 125258936}
-  slowedLight: {fileID: 1727063090}
-  normalLight: {fileID: 1660587993}
-  spedUpLight: {fileID: 1846918626}
-  volumeKnob: {fileID: 1724376358}
-  turntableLayer:
-    serializedVersion: 2
-    m_Bits: 256
-  rotationSpeed: 50
-  slowPitchValue: 0.75
-  normalPitchValue: 1
-  spedUpPitchValue: 1.25
-  defaultTonearmAngle: 0
-  startTonearmAngle: 17
-  endTonearmAngle: 48
-  powerOffKnobAngle: 135
-  powerOnKnobAngle: 225
-  slowedRPMKnobAngle: 105
-  normalRPMKnobAngle: 180
-  spedUpRPMKnobAngle: 255
-  minVolumeKnobAngle: 125
-  maxVolumeKnobAngle: 235
-  TurnedOn: 0
-  CanPlayMusic: 0
-  UpdatedRPM: 1
-  EquipRecord: 0
 --- !u!60 &96856533
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -728,6 +683,51 @@ AudioReverbFilter:
   m_LFReference: 250
   m_ReflectionsDelay: 0
   m_ReverbPreset: 1
+--- !u!114 &96856537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96856529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9852e413a25c6ea418be3923bae7edad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  platter: {fileID: 946495720}
+  startStopButton: {fileID: 4233676}
+  reverbButton: {fileID: 727998763}
+  tonearm: {fileID: 1641891616}
+  interactionPoint: {fileID: 1298366607}
+  powerKnob: {fileID: 826642376}
+  powerLight: {fileID: 637445846}
+  rpmKnob: {fileID: 125258936}
+  slowedLight: {fileID: 1727063090}
+  normalLight: {fileID: 1660587993}
+  spedUpLight: {fileID: 1846918626}
+  volumeKnob: {fileID: 1724376358}
+  turntableLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  rotationSpeed: 50
+  slowPitchValue: 0.85
+  normalPitchValue: 1
+  spedUpPitchValue: 1.15
+  defaultTonearmAngle: 0
+  startTonearmAngle: 18
+  endTonearmAngle: 47
+  powerOffKnobAngle: 135
+  powerOnKnobAngle: 225
+  slowedRPMKnobAngle: 105
+  normalRPMKnobAngle: 180
+  spedUpRPMKnobAngle: 255
+  minVolumeKnobAngle: 125
+  maxVolumeKnobAngle: 235
+  TurnedOn: 0
+  CanPlayMusic: 0
+  UpdatedRPM: 1
+  EquipRecord: 0
 --- !u!1 &120438258
 GameObject:
   m_ObjectHideFlags: 0

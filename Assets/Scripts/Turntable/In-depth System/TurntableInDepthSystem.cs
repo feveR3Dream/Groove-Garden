@@ -58,25 +58,25 @@ public class TurntableInDepthSystem : MonoBehaviour
         #region SPINNIN RECORD (Get it?)
         Transform recordTransform = record.transform;
 
-        if (TurntableControl.Instance.UpdatedRPM)
+        if (TurntableManager.Instance.UpdatedRPM)
         {
-            TurntableControl.Instance.UpdatedRPM = false;
+            TurntableManager.Instance.UpdatedRPM = false;
             ApplyNewRPM(spinSpeed, rpm);
         }
 
-        recordTransform.Rotate(0f, 0f, currentSpinSpeed * Time.deltaTime);
+        recordTransform.Rotate(0f, 0f, -currentSpinSpeed * Time.deltaTime);
         #endregion
 
 
         #region PLAY MUSIC
-        if (TurntableControl.Instance.CanPlayMusic)
+        if (TurntableManager.Instance.CanPlayMusic)
         {
             if (!isPlayingMusic)
             {
                 isPlayingMusic = true;
                 currentTrack = record.RecordTrack;
 
-                PlayMusic(currentTrack, TurntableControl.Instance.GetTimeMark());
+                PlayMusic(currentTrack, TurntableManager.Instance.GetTimeMark());
             }
         }
         #endregion
@@ -142,9 +142,9 @@ public class TurntableInDepthSystem : MonoBehaviour
         float currentTime = 0f;
         
         float currentPitch;
-        if (rpm == RPM.Slowed) currentPitch = TurntableControl.Instance.SlowedPitchValue;
-        else if (rpm == RPM.Normal) currentPitch = TurntableControl.Instance.NormalPitchValue;
-        else if (rpm == RPM.SpedUp) currentPitch = TurntableControl.Instance.SpedUpPitchValue;
+        if (rpm == RPM.Slowed) currentPitch = TurntableManager.Instance.SlowedPitchValue;
+        else if (rpm == RPM.Normal) currentPitch = TurntableManager.Instance.NormalPitchValue;
+        else if (rpm == RPM.SpedUp) currentPitch = TurntableManager.Instance.SpedUpPitchValue;
         else currentPitch = 1f;
 
 

@@ -151,9 +151,9 @@ public class Record : MonoBehaviour
             SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
             SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
 
-            TurntableControl.Instance.EquipRecord = false;
+            TurntableManager.Instance.EquipRecord = false;
 
-            Debug.Log($"Equip Record: {TurntableControl.Instance.EquipRecord}");
+            Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
 
             UpdateRecordAlpha(1f, alphaFadeSpeed);
             UpdateRecordSize(Global.RecordDiskSpawnedSize, resizeSpeed);
@@ -170,7 +170,7 @@ public class Record : MonoBehaviour
             }
             else if (moveTo == RecordMoveTo.To_Turntable)
             {
-                targetPos = TurntableControl.Instance.RecordPlacementPosition;
+                targetPos = TurntableManager.Instance.RecordPlacementPosition;
             }
             else if (moveTo == RecordMoveTo.To_Spawned_Pos)
             {

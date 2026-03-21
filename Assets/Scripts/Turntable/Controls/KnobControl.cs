@@ -160,10 +160,10 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
     public void KnobInteracted(MouseButton mouseButton)
     {
         if (mouseButton == MouseButton.Down)
-            TurntableControl.Instance.KnobDown(this);
+            TurntableManager.Instance.KnobDown(this);
         else if (mouseButton == MouseButton.Hold)
-            TurntableControl.Instance.KnobHold(this);
+            TurntableManager.Instance.KnobHold(this);
         else if (mouseButton == MouseButton.Up)
-            TurntableControl.Instance.KnobUp(this);
+            TurntableManager.Instance.KnobUp(this);
     }
 }

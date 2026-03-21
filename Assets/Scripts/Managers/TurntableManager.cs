@@ -3,9 +3,9 @@ using UnityEngine;
 
 
 [RequireComponent(typeof(TurntableInDepthSystem))]
-public class TurntableControl : MonoBehaviour
+public class TurntableManager : MonoBehaviour
 {
-    public static TurntableControl Instance { get; private set; }
+    public static TurntableManager Instance { get; private set; }
 
     [Header("Button Reference")]
     [Tooltip("Record placement position, select platter from the turntable")]
@@ -36,7 +36,7 @@ public class TurntableControl : MonoBehaviour
     [SerializeField] private LayerMask turntableLayer;
 
 
-    [Header("Disk Rotation Speed Value")]
+    [Header("Knob Rotation Speed Value")]
     [SerializeField] private float rotationSpeed;
 
 
