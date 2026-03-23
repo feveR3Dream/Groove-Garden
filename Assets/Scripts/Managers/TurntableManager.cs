@@ -521,6 +521,7 @@ public class TurntableManager : MonoBehaviour
             TurnedOn = false;
 
             turntableSystem.StopRecord();
+            StopTonearm();
 
             powerLightControl.Renderer.color = Color.black;
             powerLightControl.LightSetting.color = Color.black;

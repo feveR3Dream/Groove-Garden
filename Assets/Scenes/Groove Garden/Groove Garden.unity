@@ -5050,6 +5050,8 @@ GameObject:
   - component: {fileID: 1641891617}
   - component: {fileID: 1641891618}
   - component: {fileID: 1641891619}
+  - component: {fileID: 1641891621}
+  - component: {fileID: 1641891620}
   m_Layer: 8
   m_Name: Tonearm
   m_TagString: Untagged
@@ -5230,6 +5232,34 @@ PolygonCollider2D:
       - {x: -0.37, y: -6.375}
       - {x: -0.22999999, y: -6.165}
   m_UseDelaunayMesh: 0
+--- !u!114 &1641891620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641891616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e029e1c489c58241923260a51b66b2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  defaultAngle: 0
+  startAngle: 18
+  endAngle: 47
+  alphaFadeSpeed: 5
+--- !u!114 &1641891621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641891616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54ff9af39f0f46c4396f056cf593a049, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1660587993
 GameObject:
   m_ObjectHideFlags: 0
