@@ -12,6 +12,11 @@ public class VinylCover : MonoBehaviour, IButtonInteractable
     public GameObject RecordDisk;
 
 
+    [Header("Values")]
+    public string RecordName;
+    public string ArtistName;
+
+
     // References
     public SpriteRenderer SpriteRenderer { get; private set; }
     private Color savedColor;
@@ -40,10 +45,13 @@ public class VinylCover : MonoBehaviour, IButtonInteractable
         if (VinylRecordSO != null)
         {
             SpriteRenderer.sprite = VinylRecordSO.frontCover;
-            SpriteRenderer.sortingOrder = Global.OnShelfSortingOrder;
+            SpriteRenderer.sortingOrder = Global.SortingValue.OnShelfSortingOrder;
             SpriteRenderer.sortingLayerID = SortingLayer.layers[3].id; // "Shelf, Covers & Album Names"
 
-            this.transform.localScale = Vector3.one * Global.RecordCoverShelfSize;
+            RecordName = VinylRecordSO.vinylName;
+            ArtistName = VinylRecordSO.vinylArtist;
+
+            this.transform.localScale = Vector3.one * Global.SizeValue.RecordCoverShelfSize;
         }
         else
         {

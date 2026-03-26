@@ -49,12 +49,13 @@ public class Record : MonoBehaviour
         {
             SpriteRenderer.sprite = recordSO.picture;
             SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
-            SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
+            SpriteRenderer.sortingOrder = Global.SortingValue.SpawnedInSortingOrder;
             RecordTrack = recordSO.track;
 
-            transform.localScale = Vector3.one * Global.RecordDiskSpawnedSize;
+            transform.localScale = Vector3.one * Global.SizeValue.RecordDiskSpawnedSize;
         }
     }
+
 
     private void UpdateRecordAlpha(float alpha, float fadeSpeed)
     {
@@ -68,6 +69,7 @@ public class Record : MonoBehaviour
 
         alphaCoroutine = StartCoroutine(UpdatingRecordAlpha(alpha, fadeSpeed));
     }
+
 
     private IEnumerator UpdatingRecordAlpha(float alpha, float fadeSpeed)
     {
@@ -100,6 +102,7 @@ public class Record : MonoBehaviour
         resizeCoroutine = StartCoroutine(ResizingRecord(targetSize, resizeSpeed));
     }
 
+
     private IEnumerator ResizingRecord(Vector3 targetSize, float resizeSpeed)
     {   
         while (!Mathf.Approximately(transform.localScale.magnitude, targetSize.magnitude))
@@ -113,6 +116,7 @@ public class Record : MonoBehaviour
         transform.localScale = targetSize;
         resizeCoroutine = null;
     }
+
 
     public void MoveTo(RecordMoveTo moveTo, float moveToSpeed) // This just moves the record
     {
@@ -132,31 +136,33 @@ public class Record : MonoBehaviour
             RecordManager.Instance.SetRecordMoveable(true);
 
             SpriteRenderer.sortingLayerName = "Turntable & Record";
-            SpriteRenderer.sortingOrder = Global.HandlingSortingOrder;
+            SpriteRenderer.sortingOrder = Global.SortingValue.HandlingSortingOrder;
 
             UpdateRecordAlpha(0.5f, alphaFadeSpeed);
-            UpdateRecordSize(Global.RecordDiskHandlingSize, resizeSpeed);
+            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeSpeed);
         }
         else if (moveTo == RecordMoveTo.To_Turntable)
         {
             SpriteRenderer.sortingLayerName = "Turntable & Record";
 
             UpdateRecordAlpha(1f, alphaFadeSpeed);
-            UpdateRecordSize(Global.RecordDiskHandlingSize, resizeSpeed);
+            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeSpeed);
         }
         else if (moveTo == RecordMoveTo.To_Spawned_Pos)
         {
             RecordManager.Instance.SetRecordMoveable(false);
 
             SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
-            SpriteRenderer.sortingOrder = Global.SpawnedInSortingOrder;
+            SpriteRenderer.sortingOrder = Global.SortingValue.SpawnedInSortingOrder;
 
+            //TurntableManager.Instance.EquipRecord = false;
             TurntableManager.Instance.EquipRecord = false;
 
+            //Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
             Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
 
             UpdateRecordAlpha(1f, alphaFadeSpeed);
-            UpdateRecordSize(Global.RecordDiskSpawnedSize, resizeSpeed);
+            UpdateRecordSize(Global.SizeValue.RecordDiskSpawnedSize, resizeSpeed);
         }
 
         Vector2 targetPos = this.transform.position;
@@ -170,7 +176,10 @@ public class Record : MonoBehaviour
             }
             else if (moveTo == RecordMoveTo.To_Turntable)
             {
-                targetPos = TurntableManager.Instance.RecordPlacementPosition;
+                //targetPos = TurntableManager.Instance.RecordPlacementPosition;
+                //targetPos = NewTurntableManager.Instance.RecordPlacementPosition;
+
+                targetPos = ButtonManager.Instance.RecordPlacementPos;
             }
             else if (moveTo == RecordMoveTo.To_Spawned_Pos)
             {

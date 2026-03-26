@@ -20,6 +20,8 @@ public class TurntableInDepthSystem : MonoBehaviour
     // Variables
     //[HideInInspector] public float CurrentTimeMark = 0f; // Determine time mark of track to play
     private bool isPlayingMusic = false;
+    public bool IsPlayingMusic => isPlayingMusic;
+
     private float currentSpinSpeed;
 
 
@@ -32,6 +34,7 @@ public class TurntableInDepthSystem : MonoBehaviour
     {  
         StartCoroutine(InitializingAudioComponent());
     }
+
 
     private IEnumerator InitializingAudioComponent()
     {
@@ -58,9 +61,9 @@ public class TurntableInDepthSystem : MonoBehaviour
         #region SPINNIN RECORD (Get it?)
         Transform recordTransform = record.transform;
 
-        if (TurntableManager.Instance.UpdatedRPM)
+        if (KnobManager.Instance.RPMControl.UpdatedRPM)
         {
-            TurntableManager.Instance.UpdatedRPM = false;
+            KnobManager.Instance.RPMControl.UpdatedRPM = false;
             ApplyNewRPM(spinSpeed, rpm);
         }
 
@@ -69,16 +72,20 @@ public class TurntableInDepthSystem : MonoBehaviour
 
 
         #region PLAY MUSIC
-        if (TurntableManager.Instance.CanPlayMusic)
+        if (TurntableManager.Instance.TonearmOnRecord)
         {
             if (!isPlayingMusic)
             {
                 isPlayingMusic = true;
                 currentTrack = record.RecordTrack;
 
-                PlayMusic(currentTrack, TurntableManager.Instance.GetTimeMark());
+                PlayMusic(currentTrack, KnobManager.Instance.TonearmControl.GetTimeMark());
+
+                DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
+                Debug.Log("Am I faster?");
             }
         }
+
         #endregion
     }
 
@@ -88,7 +95,7 @@ public class TurntableInDepthSystem : MonoBehaviour
         if (isPlayingMusic)
         {
             isPlayingMusic = false;
-            PauseMusic();    
+            PauseMusic();
         }
     }
 
@@ -142,16 +149,16 @@ public class TurntableInDepthSystem : MonoBehaviour
         float currentTime = 0f;
         
         float currentPitch;
-        if (rpm == RPM.Slowed) currentPitch = TurntableManager.Instance.SlowedPitchValue;
-        else if (rpm == RPM.Normal) currentPitch = TurntableManager.Instance.NormalPitchValue;
-        else if (rpm == RPM.SpedUp) currentPitch = TurntableManager.Instance.SpedUpPitchValue;
+        if (rpm == RPM.Slowed) currentPitch = KnobManager.Instance.RPMControl.SlowedPitchValue;
+        else if (rpm == RPM.Normal) currentPitch = KnobManager.Instance.RPMControl.NormalPitchValue;
+        else if (rpm == RPM.SpedUp) currentPitch = KnobManager.Instance.RPMControl.SpedUpPitchValue;
         else currentPitch = 1f;
 
 
-        while (currentTime < Global.MaxInterpolationTime)
+        while (currentTime < Global.RecordPlayingValue.MaxInterpolationTime)
         {
             currentTime += Time.deltaTime;
-            float percent = currentTime / Global.MaxInterpolationTime;
+            float percent = currentTime / Global.RecordPlayingValue.MaxInterpolationTime;
 
             // Disk spin speed
             currentSpinSpeed = Mathf.Lerp(currentSpinSpeed, spinSpeed, percent);
@@ -191,10 +198,10 @@ public class TurntableInDepthSystem : MonoBehaviour
         // For 
         float targetRoomValue = isReverb ? -1000f : -10000f;
 
-        while (currentTime < Global.MaxInterpolationTime)
+        while (currentTime < Global.RecordPlayingValue.MaxInterpolationTime)
         {
             currentTime += Time.deltaTime;
-            float percent = currentTime / Global.MaxInterpolationTime;
+            float percent = currentTime / Global.RecordPlayingValue.MaxInterpolationTime;
 
             // Reverb Level
             float tempReverbValue = Mathf.Lerp(ReverbFilter.reverbLevel, targetReverbValue, percent); 

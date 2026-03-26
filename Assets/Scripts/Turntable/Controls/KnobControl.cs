@@ -12,10 +12,11 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
     // Values
     public float AlphaFadeSpeed { get; private set; } = 10f;
     private float angleOffset;
+    public bool CanCalculateOffset = true;
 
 
     // Coroutines
-    private Coroutine resetCoroutine = null;
+    private Coroutine correctRotationCoroutine = null;
     private Coroutine alphaCoroutine = null;
 
 
@@ -69,11 +70,17 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
     public void UpdateRotationClamped(Transform transformRef, float minAngle, float maxAngle, float rotationSpeed)
     {
+        if (CanCalculateOffset)
+        {
+            CanCalculateOffset = false;
+            SetAngleOffset();
+        }
+
         Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (mousePos - (Vector2)transformRef.position).normalized;
+        Vector2 mouseDir = (mousePos - (Vector2)transformRef.position).normalized;
 
         float rawAngle =
-            -Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f + angleOffset;
+            -Mathf.Atan2(mouseDir.y, mouseDir.x) * Mathf.Rad2Deg - 90f + angleOffset;
 
         float clockwiseAngle = NormalizeClockwise(rawAngle);
         float clampedAngle = ClampAngleCircular(clockwiseAngle, minAngle, maxAngle);
@@ -101,18 +108,18 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
     public void StopResetRotation()
     {
-        if (resetCoroutine != null)
+        if (correctRotationCoroutine != null)
         {
-            StopCoroutine(resetCoroutine);
-            resetCoroutine = null;
+            StopCoroutine(correctRotationCoroutine);
+            correctRotationCoroutine = null;
         }
     }
-    public void ResetRotation(GameObject goRef, float resetAngle, float rotationSpeed)
+    public void CorrectRotation(GameObject goRef, float resetAngle, float rotationSpeed)
     {
         StopResetRotation();
-        resetCoroutine = StartCoroutine(ResettingRotation(goRef, resetAngle, rotationSpeed));
+        correctRotationCoroutine = StartCoroutine(CorrectingRotation(goRef, resetAngle, rotationSpeed));
     }
-    private IEnumerator ResettingRotation(GameObject goRef, float resetAngle, float rotationSpeed)
+    private IEnumerator CorrectingRotation(GameObject goRef, float resetAngle, float rotationSpeed)
     {
         Quaternion targetRotation = Quaternion.Euler(0f, 0f, -resetAngle);
 
@@ -123,9 +130,10 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
         }
 
         goRef.transform.rotation = targetRotation;
-        resetCoroutine = null;
-    }
 
+        CanCalculateOffset = true;
+        correctRotationCoroutine = null;
+    }
 
 
     // FOR EVERY KNOB RELATED FUNCTIONALITY
@@ -160,10 +168,19 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
     public void KnobInteracted(MouseButton mouseButton)
     {
         if (mouseButton == MouseButton.Down)
+        {
+            //TurntableManager.Instance.KnobDown(this);
             TurntableManager.Instance.KnobDown(this);
+        }
         else if (mouseButton == MouseButton.Hold)
+        {
+            //TurntableManager.Instance.KnobHold(this);
             TurntableManager.Instance.KnobHold(this);
+        }
         else if (mouseButton == MouseButton.Up)
+        {
+            //TurntableManager.Instance.KnobUp(this);
             TurntableManager.Instance.KnobUp(this);
+        }
     }
 }

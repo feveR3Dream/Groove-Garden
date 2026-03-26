@@ -35,7 +35,7 @@ public class RecordShelf : MonoBehaviour
             else DestroyImmediate(child);
         }
 
-        if (Application.isPlaying) Global.SorterDictionary.Clear();
+        if (Application.isPlaying) Global.SortingValue.SorterDictionary.Clear();
 
         OrganizeRecordRow();
     }
@@ -73,7 +73,7 @@ public class RecordShelf : MonoBehaviour
 
             if (Application.isPlaying)
             {
-                Global.SorterDictionary.Add(sorter, currentBatchList);
+                Global.SortingValue.SorterDictionary.Add(sorter, currentBatchList);
             }
         }
     }

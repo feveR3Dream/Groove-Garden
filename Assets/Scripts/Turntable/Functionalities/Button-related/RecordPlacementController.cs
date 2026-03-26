@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TurntableFunctionalities : MonoBehaviour
+[RequireComponent(typeof(ButtonControl))]
+public class RecordPlacementController : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -15,4 +16,5 @@ public class TurntableFunctionalities : MonoBehaviour
     {
         
     }
+
 }

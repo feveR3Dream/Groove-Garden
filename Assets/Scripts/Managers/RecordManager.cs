@@ -81,14 +81,14 @@ public class RecordManager : MonoBehaviour
         canEquip = false;
         CurrentVinylRecord = record;
         CurrentVinylRecord.transform.SetParent(hideRecordTransform);
-        CurrentVinylRecord.SpriteRenderer.sortingOrder = Global.EquippedSortingOrder;
+        CurrentVinylRecord.SpriteRenderer.sortingOrder = Global.SortingValue.EquippedSortingOrder;
 
         activeMovementCoroutine = StartCoroutine(EquippingCoroutine());
     }
 
     private IEnumerator EquippingCoroutine()
     {
-        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
 
         UIManager.Instance.UpdateRecordCoverEquip(true);
         UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to access vinyl cover");
@@ -169,7 +169,7 @@ public class RecordManager : MonoBehaviour
     }
     private IEnumerator ReturningRecordCover()
     {
-        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, coverMoveSpeed, Global.RecordCoverShelfSize);
+        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, coverMoveSpeed, Global.SizeValue.RecordCoverShelfSize);
 
         CurrentVinylRecord = null;
         canEquip = true;
@@ -203,7 +203,7 @@ public class RecordManager : MonoBehaviour
             CurrentRecord = recordGO.GetComponent<Record>();
         }
 
-        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.SizeValue.RecordCoverHandlingSize);
 
         if (unsheathe)
         {
@@ -231,12 +231,12 @@ public class RecordManager : MonoBehaviour
         if (CurrentRecordExamine != examine) 
             CurrentRecordExamine = examine;
 
-        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
 
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, coverMoveSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
         {
@@ -320,7 +320,7 @@ public class RecordManager : MonoBehaviour
 
         UIManager.Instance.UpdateRecordCoverHidden(show);
 
-        yield return RecordCoverTransforming(destination, false, coverMoveSpeed, Global.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(destination, false, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
 
         activeMovementCoroutine = null;
     }

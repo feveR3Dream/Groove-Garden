@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a46b7293cc8e3547b22ead05c72c5d8, type: 3}
   m_Name: Wui229 Cover
   m_EditorClassIdentifier: 
+  vinylName: Wui229
+  vinylArtist: Chen Hsien Ching
   frontCover: {fileID: 21300000, guid: 96b356dd58d639247870eacdaccc00e1, type: 3}
   backCover: {fileID: 21300000, guid: f75884b8fe146cc4390d17963981e93e, type: 3}
-  record: {fileID: 0}
