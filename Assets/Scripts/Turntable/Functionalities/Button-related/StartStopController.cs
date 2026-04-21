@@ -56,7 +56,7 @@ public class StartStopController : MonoBehaviour
         }
         else ResetStartStopButton();
 
-        DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
+        TurntableManager.Instance.DisplayerControl.UpdatePlayPauseDisplay();
     }
 
 

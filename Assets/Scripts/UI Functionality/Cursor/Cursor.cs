@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Cursor : MonoBehaviour
 {
@@ -17,6 +19,9 @@ public class Cursor : MonoBehaviour
     private IButtonInteractable buttonInteractable = null;
     private IKnobInteractable knobInteractable = null;
 
+    // Coroutine
+    private Coroutine placingRecordDownCoroutine = null;
+    
 
     private void Awake()
     {
@@ -34,6 +39,30 @@ public class Cursor : MonoBehaviour
         // MOUSE DOWN-------------------
         if (Input.GetMouseButtonDown(0))
         {
+            // 2. THE ULTIMATE UI SHIELD
+            // If the mouse is over a UI element, abort the world-space click entirely.
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                // --- DEBUGGER: Find out exactly what UI element is eating the click ---
+                PointerEventData pointerData = new PointerEventData(EventSystem.current)
+                {
+                    position = Input.mousePosition
+                };
+
+                List<RaycastResult> results = new List<RaycastResult>();
+                EventSystem.current.RaycastAll(pointerData, results);
+
+                if (results.Count > 0)
+                {
+                    // This prints the name of the top-most UI element to the console.
+                    // Clicking the message in the console will highlight the object in your Hierarchy!
+                    Debug.Log($"<color=orange>UI Click Blocked By:</color> {results[0].gameObject.name}", results[0].gameObject);
+                }
+                // ----------------------------------------------------------------------
+
+                return;
+            }
+
             Vector2 mouseWorldPos = cam.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero, 10f, targetLayerValue);
 
@@ -43,20 +72,33 @@ public class Cursor : MonoBehaviour
             #region BUTTON INTERACTION
             if (currentSelectedGO.TryGetComponent<IButtonInteractable>(out IButtonInteractable buttonInteractable))
             {
-                this.buttonInteractable = buttonInteractable;
-                this.buttonInteractable.ButtonInteracted(registered: true, MouseButton.Down);
+                if (UIManager.Instance.PlacingRecordDown)
+                {
+                    if (!currentSelectedGO.CompareTag("RecordPlacement")) return;
+                    else
+                    {
+                        this.buttonInteractable = buttonInteractable;
+                        this.buttonInteractable.ButtonInteracted(registered: true, MouseButton.Down);
+                    }
+                }
+                else
+                {
+                    this.buttonInteractable = buttonInteractable;
+                    this.buttonInteractable.ButtonInteracted(registered: true, MouseButton.Down);
+                }
+                
             }
             #endregion
-
 
             #region KNOB INTERACTION
             else if (currentSelectedGO.TryGetComponent<IKnobInteractable>(out IKnobInteractable knobInteractable))
             {
+                if (UIManager.Instance.PlacingRecordDown) return;
+
                 this.knobInteractable = knobInteractable;
                 this.knobInteractable.KnobInteracted(MouseButton.Down);
             }
             #endregion
-
 
             #region NO VALID INTERACTION
             else
@@ -66,8 +108,8 @@ public class Cursor : MonoBehaviour
                 this.knobInteractable = null;
             }
             #endregion
-
         }
+
 
         // MOUSE HOLD--------------------
         else if (Input.GetMouseButton(0))
@@ -135,7 +177,4 @@ public class Cursor : MonoBehaviour
         }
     }
 
-
-
-    
 }

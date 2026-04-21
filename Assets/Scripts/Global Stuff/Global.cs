@@ -26,11 +26,11 @@ public class Global
     {
         // For vinyl cover
         public static int OnShelfSortingOrder { get; private set; } = 0;
-        public static int EquippedSortingOrder { get; private set; } = 5;
+        public static int EquippedSortingOrder { get; private set; } = 6;
 
 
         // For vinyl record
-        public static int SpawnedInSortingOrder { get; private set; } = 4;
+        public static int SpawnedInSortingOrder { get; private set; } = 5;
         public static int HandlingSortingOrder { get; private set; } = 2;
         public static Dictionary<Sorter, List<GameObject>> SorterDictionary = new Dictionary<Sorter, List<GameObject>>();
     }

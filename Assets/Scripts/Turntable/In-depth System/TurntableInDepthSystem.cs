@@ -81,7 +81,7 @@ public class TurntableInDepthSystem : MonoBehaviour
 
                 PlayMusic(currentTrack, KnobManager.Instance.TonearmControl.GetTimeMark());
 
-                DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
+                TurntableManager.Instance.DisplayerControl.UpdatePlayPauseDisplay();
                 Debug.Log("Am I faster?");
             }
         }

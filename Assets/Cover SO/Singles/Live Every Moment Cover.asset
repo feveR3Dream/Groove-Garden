@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a46b7293cc8e3547b22ead05c72c5d8, type: 3}
+  m_Name: Live Every Moment Cover
+  m_EditorClassIdentifier: 
+  vinylName: Live Every Moment
+  vinylArtist: Lofisauce
+  frontCover: {fileID: 21300000, guid: dfbcd13bc5b0c964e9c4d15629598532, type: 3}
+  backCover: {fileID: 21300000, guid: 9fd0ed994863325468b4723651eb33bc, type: 3}

@@ -49,7 +49,7 @@ public class Browse : MonoBehaviour
             }
 
             // Browsing Vertically
-            if (canBrowseVertically)
+            if (canBrowseVertically && !TutorialManager.Instance.IsVisible)
             {
                 VerticalBrowse();
             }

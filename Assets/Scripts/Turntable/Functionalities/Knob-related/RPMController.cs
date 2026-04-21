@@ -86,43 +86,47 @@ public class RPMController : MonoBehaviour
 
     public void UpdateRPMStatus()
     {
-        if (TargetRPM == RPM.Slowed && CurrentRPM != RPM.Slowed)
+        if (TurntableManager.Instance.TurnedOn)
         {
-            currentRecordSpinSpeed = Global.RecordPlayingValue.SlowedSpinSpeed;
-            CurrentRPM = RPM.Slowed;
+            if (TargetRPM == RPM.Slowed && CurrentRPM != RPM.Slowed)
+            {
+                currentRecordSpinSpeed = Global.RecordPlayingValue.SlowedSpinSpeed;
+                CurrentRPM = RPM.Slowed;
 
-            UpdateRPMPitch(CurrentRPM);
+                UpdateRPMPitch(CurrentRPM);
 
-            // Light Settings
-            slowedLightControl.LightSetting.color = Color.red;
-            slowedLightControl.Renderer.color = Color.red;
+                // Light Settings
+                slowedLightControl.LightSetting.color = Color.red;
+                slowedLightControl.Renderer.color = Color.red;
+            }
+            else if (TargetRPM == RPM.Normal && CurrentRPM != RPM.Normal)
+            {
+                currentRecordSpinSpeed = Global.RecordPlayingValue.NormalSpinSpeed;
+                CurrentRPM = RPM.Normal;
+
+                UpdateRPMPitch(CurrentRPM);
+
+                // Light Settings
+                normalLightControl.LightSetting.color = Color.red;
+                normalLightControl.Renderer.color = Color.red;
+            }
+            else if (TargetRPM == RPM.SpedUp && CurrentRPM != RPM.Normal)
+            {
+                currentRecordSpinSpeed = Global.RecordPlayingValue.SpedUpSpinSpeed;
+                CurrentRPM = RPM.SpedUp;
+
+                UpdateRPMPitch(CurrentRPM);
+
+                // Light Settings
+                spedUpLightControl.LightSetting.color = Color.red;
+                spedUpLightControl.Renderer.color = Color.red;
+            }
+            else Debug.Log("Called");
+
+            UpdatedRPM = true;
+            TurntableManager.Instance.DisplayerControl.UpdateRPMDisplay(TargetRPM);
         }
-        else if (TargetRPM == RPM.Normal && CurrentRPM != RPM.Normal)
-        {
-            currentRecordSpinSpeed = Global.RecordPlayingValue.NormalSpinSpeed;
-            CurrentRPM = RPM.Normal;
 
-            UpdateRPMPitch(CurrentRPM);
-
-            // Light Settings
-            normalLightControl.LightSetting.color = Color.red;
-            normalLightControl.Renderer.color = Color.red;
-        }
-        else if (TargetRPM == RPM.SpedUp && CurrentRPM != RPM.Normal)
-        {
-            currentRecordSpinSpeed = Global.RecordPlayingValue.SpedUpSpinSpeed;
-            CurrentRPM = RPM.SpedUp;
-
-            UpdateRPMPitch(CurrentRPM);
-
-            // Light Settings
-            spedUpLightControl.LightSetting.color = Color.red;
-            spedUpLightControl.Renderer.color = Color.red;
-        }
-        else Debug.Log("Called");
-
-        UpdatedRPM = true;
-        if (TurntableManager.Instance.TurnedOn) DisplayerManager.Instance.Displayer.UpdateRPMDisplay(TargetRPM);
     }
 
 

@@ -30,6 +30,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float transitionSpeed = 2.5f;    // Camera transition speed for transitioning
 
 
+    [Header("Hover & Opacity Settings")]
+    [Range(0f, 1f)] public float DimButtonAlpha = 0.25f;
+    [Range(0f, 1f)] public float HighlightButtonAlpha = 0.75f;
+    [Space]
+    [Range(0f, 1f)] public float DimTextAlpha = 0.25f;
+    [Range(0f, 1f)] public float HighlightTextAlpha = 0.75f;
+
+
     [Header("References")]
     public Transform LeftCameraLimit;       // These values must be within
     public Transform RightCameraLimit;     //  left & right & top & bottom's 
@@ -56,10 +64,13 @@ public class UIManager : MonoBehaviour
 
 
     // Values
-    public bool IsTransitioning { get; private set; }
+    private bool isTransitioning = false;
+    public bool IsTransitioning { get => isTransitioning; }
+
+    [HideInInspector] public bool PlacingRecordDown = false;
 
     private const float dimTextAlpha = 0.25f;
-    private const float highlightTextAlpha = 0.75f;
+    private const float highlightTextAlpha = 0.9f;
 
     private Vector2 turntableScreenPos;
 
@@ -131,25 +142,46 @@ public class UIManager : MonoBehaviour
     }
 
 
-    private void OnHover(Button button, TextMeshProUGUI text, Color color, float alpha)
+    private void OnHover(Button button, TextMeshProUGUI text, Color color, float unusedAlphaParam)
     {
-        if (IsTransitioning || !button.interactable) return;
+        if (isTransitioning || !button.interactable) return;
+
+        // Save original text color
         if (!textColorSaver.ContainsKey(text)) textColorSaver.Add(text, text.color);
 
-        float clampedAlpha = Mathf.Clamp01(alpha);
-        Color tempColor = color;
-        tempColor.a = clampedAlpha;
+        // Fade the Text
+        Color tempTextColor = color;
+        tempTextColor.a = HighlightTextAlpha; // Using your new Inspector variable
+        text.color = tempTextColor;
 
-        text.color = tempColor;
+        // Fade the Button Image
+        Image buttonImage = button.GetComponent<Image>();
+        if (buttonImage != null)
+        {
+            Color tempBgColor = buttonImage.color;
+            tempBgColor.a = HighlightButtonAlpha; // Using your new Inspector variable
+            buttonImage.color = tempBgColor;
+        }
     }
 
 
     private void OffHover(Button button, TextMeshProUGUI text)
     {
-        if (IsTransitioning || !button.interactable) return;
+        if (isTransitioning || !button.interactable) return;
+
+        // Reset the Text
         if (textColorSaver.TryGetValue(text, out Color colorResult))
         {
             text.color = colorResult;
+        }
+
+        // Reset the Button Image back to the Inspector "Dim" value
+        Image buttonImage = button.GetComponent<Image>();
+        if (buttonImage != null)
+        {
+            Color tempBgColor = buttonImage.color;
+            tempBgColor.a = DimButtonAlpha;
+            buttonImage.color = tempBgColor;
         }
     }
 
@@ -217,7 +249,7 @@ public class UIManager : MonoBehaviour
         OffHover(RightButton, RightText);
         GuideText.gameObject.SetActive(false);
 
-        IsTransitioning = true; // move this to top if it doesn't work
+        isTransitioning = true; // move this to top if it doesn't work
 
         bool leftON = false;
         bool rightInteractable = false;
@@ -280,7 +312,7 @@ public class UIManager : MonoBehaviour
             if (!rightInteractable) SetButtonTextContent(RightText, "Hover here to move right");
             else SetButtonTextContent(RightText, "Press to go to vinyl selection area");
 
-            IsTransitioning = false;
+            isTransitioning = false;
         }
 
         transitioningCoroutine = null;
@@ -299,6 +331,13 @@ public class UIManager : MonoBehaviour
 
         button.interactable = interaction && isVisible;
 
+        Image buttonImage = button.GetComponent<Image>();
+        if (buttonImage != null)
+        {
+            buttonImage.raycastTarget = isVisible;
+        }
+
+        // Handle the fading
         Opacity opacity = isVisible ? Opacity.Visible : Opacity.Transparent;
         SetOpacity(button, text, opacity);
     }
@@ -309,14 +348,18 @@ public class UIManager : MonoBehaviour
         Image image = button.GetComponent<Image>();
         if (image == null || text == null) return;
 
-        float target = opacity == Opacity.Visible ? dimTextAlpha : 0f;
+        // 1. Calculate the two separate targets based on your new Inspector variables
+        float targetButtonAlpha = opacity == Opacity.Visible ? DimButtonAlpha : 0f;
+        float targetTextAlpha = opacity == Opacity.Visible ? DimTextAlpha : 0f;
 
+        // 2. Apply to the Button Background
         Color tempButtonColor = image.color;
-        tempButtonColor.a = target;
+        tempButtonColor.a = targetButtonAlpha;
         image.color = tempButtonColor;
 
+        // 3. Apply to the Text
         Color tempTextColor = text.color;
-        tempTextColor.a = target;
+        tempTextColor.a = targetTextAlpha;
         text.color = tempTextColor;
     }
 

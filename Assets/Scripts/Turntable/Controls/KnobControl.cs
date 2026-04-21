@@ -10,7 +10,7 @@ public class KnobControl : MonoBehaviour, IKnobInteractable
 
 
     // Values
-    public float AlphaFadeSpeed { get; private set; } = 10f;
+    public float AlphaFadeSpeed { get; private set; } = 20f;
     private float angleOffset;
     public bool CanCalculateOffset = true;
 

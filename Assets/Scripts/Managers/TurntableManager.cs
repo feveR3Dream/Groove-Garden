@@ -8,6 +8,11 @@ public class TurntableManager : MonoBehaviour
     public static TurntableManager Instance { get; private set; }
 
 
+    [Header("Displayer Reference")]
+    [SerializeField] private DisplayerControl displayerControl;
+    public DisplayerControl DisplayerControl => displayerControl;
+
+
     // Turntable System Var
     private TurntableInDepthSystem turntableSystem;
     public TurntableInDepthSystem TurntableSystem => turntableSystem;
@@ -141,7 +146,7 @@ public class TurntableManager : MonoBehaviour
             EquipRecord = !EquipRecord;
             RecordMoveTo recordMoveTo = EquipRecord ? RecordMoveTo.To_Turntable : RecordMoveTo.To_Mouse;
 
-            record.MoveTo(recordMoveTo, RecordManager.Instance.RecordMoveSpeed);
+            record.MoveTo(recordMoveTo, RecordManager.Instance.RecordMoveDuration);
 
             if (!EquipRecord)
             {
@@ -152,7 +157,7 @@ public class TurntableManager : MonoBehaviour
                 UIManager.Instance.UpdateRecordCoverEquip(false);
             }
 
-            if (TurnedOn) DisplayerManager.Instance.Displayer.UpdateRecordDisplay(EquipRecord);
+            if (TurnedOn) TurntableManager.Instance.DisplayerControl.UpdateRecordDisplay(EquipRecord);
         }
 
         Debug.Log($"Equip Record: {EquipRecord}");

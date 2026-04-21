@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - RecordPlacement
   layers:
   - Default
   - TransparentFX
@@ -52,4 +53,10 @@ TagManager:
     locked: 0
   - name: UI Button
     uniqueID: 4129536043
+    locked: 0
+  - name: UI Tutorial
+    uniqueID: 2346825337
+    locked: 0
+  - name: UI Overlord
+    uniqueID: 1168008129
     locked: 0

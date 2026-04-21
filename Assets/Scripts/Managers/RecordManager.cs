@@ -1,12 +1,10 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class RecordManager : MonoBehaviour
 {
     public static RecordManager Instance { get; private set; }
     public VinylCover CurrentVinylRecord { get; private set; } = null;
-    
 
     [Header("References")]
     [SerializeField] private Transform bottomCamLimit;
@@ -19,34 +17,34 @@ public class RecordManager : MonoBehaviour
     [Space]
     [SerializeField] private Transform recordDiskContainer;
 
+    [Header("Time-Based Values (Seconds)")]
+    [SerializeField] private float offset;
+    [SerializeField] private float coverMoveDuration = 0.5f;
+    [SerializeField] private float unsheatheDuration = 0.4f;
+    [SerializeField] private float recordMoveDuration = 0.3f;
+    public float RecordMoveDuration => recordMoveDuration;
 
-    [Header("Values")]
-    [SerializeField] private float offset; // For record cover placement adjustment
-    [SerializeField] private float coverMoveSpeed = 5f; // Speed specifically for cover movement
-    [SerializeField] private float unsheatheSpeed = 5f; // Speed specifically for unsheathing record
-    [SerializeField] private float recordMoveSpeed = 20f; // Speed specifically for moving record 
-    public float RecordMoveSpeed => recordMoveSpeed;
+    [Header("Animation Curves")]
+    [SerializeField] private AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+    [SerializeField] private AnimationCurve scaleCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     // References
     public RecordExamine CurrentRecordExamine { get; private set; } = RecordExamine.None;
     public RecordSide CurrentRecordSide { get; private set; } = RecordSide.Front;
     public RecordToggle CurrentRecordToggle { get; private set; } = RecordToggle.Hide;
-    public Record CurrentRecord { get; private set; } = null;   // MAKE THIS GET, PRIVATE SET
+    public Record CurrentRecord { get; private set; } = null;
     public Transform ShowRecordTransform { get; private set; }
 
     private Camera cam;
     private SpriteRenderer spriteRenderer;
-
 
     // Values
     public bool RecordMoveable { get; private set; } = false;
     private bool canEquip = true;
     private int orgSortingOrder = 0;
 
-
     // Coroutines
     private Coroutine activeMovementCoroutine = null;
-
 
     private void Awake()
     {
@@ -88,14 +86,12 @@ public class RecordManager : MonoBehaviour
 
     private IEnumerator EquippingCoroutine()
     {
-        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveDuration, Global.SizeValue.RecordCoverHandlingSize);
 
         UIManager.Instance.UpdateRecordCoverEquip(true);
         UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to access vinyl cover");
         activeMovementCoroutine = null;
     }
-
-
 
     // For inspecting & interacting with the record 
     public void RecordCoverTransition(Direction direction)    // LEFT/RIGHT BUTTON PRESSED
@@ -105,6 +101,7 @@ public class RecordManager : MonoBehaviour
 
         activeMovementCoroutine = StartCoroutine(RecordCoverTransitioning(direction, CurrentRecordExamine));
     }
+
     private IEnumerator RecordCoverTransitioning(Direction direction, RecordExamine examine)
     {
         UIManager.Instance.LeftRightCoverInspectButtonEnable(false);
@@ -136,7 +133,6 @@ public class RecordManager : MonoBehaviour
             }
         }
 
-
         if (CurrentRecordExamine == RecordExamine.Unsheathe)
         {
             yield return StartCoroutine(UnsheathingRecordToggle(true));
@@ -153,8 +149,6 @@ public class RecordManager : MonoBehaviour
         activeMovementCoroutine = null;
     }
 
-
-
     // Return the record back to vinyl shelf on selection screen
     private void ReturnRecordCover()
     {
@@ -167,9 +161,10 @@ public class RecordManager : MonoBehaviour
 
         activeMovementCoroutine = StartCoroutine(ReturningRecordCover());
     }
+
     private IEnumerator ReturningRecordCover()
     {
-        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, coverMoveSpeed, Global.SizeValue.RecordCoverShelfSize);
+        yield return RecordCoverTransforming(CurrentVinylRecord.OrgPosition, false, coverMoveDuration, Global.SizeValue.RecordCoverShelfSize);
 
         CurrentVinylRecord = null;
         canEquip = true;
@@ -182,20 +177,17 @@ public class RecordManager : MonoBehaviour
         activeMovementCoroutine = null;
     }
 
-
-
     // Like the name implies, take the cover off to reveal disk
     private IEnumerator UnsheathingRecordToggle(bool unsheathe)
     {
-        Vector2 targetPos = unsheathe ? (Vector2) hideCoverTransform.position : (Vector2) ShowRecordTransform.position;
-        if (!unsheathe)
+        Vector2 targetPos = unsheathe ? (Vector2)hideCoverTransform.position : (Vector2)ShowRecordTransform.position;
+
+        if (!unsheathe && CurrentRecord != null)
         {
-            if (CurrentRecord != null)
-                CurrentRecord.MoveTo(RecordMoveTo.To_Spawned_Pos, RecordMoveSpeed);
+            CurrentRecord.MoveTo(RecordMoveTo.To_Spawned_Pos, recordMoveDuration);
         }
 
-        if (CurrentVinylRecord.RecordDisk != null &&
-            CurrentRecord == null)
+        if (CurrentVinylRecord.RecordDisk != null && CurrentRecord == null)
         {
             GameObject recordDisk = CurrentVinylRecord.RecordDisk;
             GameObject recordGO = Instantiate(recordDisk, (Vector2)ShowRecordTransform.position, Quaternion.identity, recordDiskContainer);
@@ -203,14 +195,13 @@ public class RecordManager : MonoBehaviour
             CurrentRecord = recordGO.GetComponent<Record>();
         }
 
-        yield return RecordCoverTransforming(targetPos, false, unsheatheSpeed, Global.SizeValue.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(targetPos, false, unsheatheDuration, Global.SizeValue.RecordCoverHandlingSize);
 
-        if (unsheathe)
+        if (unsheathe && CurrentRecord != null)
         {
-            if (CurrentRecord != null)
-                CurrentRecord.MoveTo(RecordMoveTo.To_Mouse, RecordMoveSpeed);
+            CurrentRecord.MoveTo(RecordMoveTo.To_Mouse, recordMoveDuration);
         }
-        else
+        else if (!unsheathe)
         {
             CurrentRecordExamine = RecordExamine.Default;
 
@@ -226,17 +217,18 @@ public class RecordManager : MonoBehaviour
             CurrentRecord = null;
         }
     }
+
     private IEnumerator FlipRecordCover(RecordSide side, RecordExamine examine)
     {
-        if (CurrentRecordExamine != examine) 
+        if (CurrentRecordExamine != examine)
             CurrentRecordExamine = examine;
 
-        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(Vector2.zero, true, coverMoveDuration, Global.SizeValue.RecordCoverHandlingSize);
 
         if (side == RecordSide.Back) CurrentVinylRecord.IsFrontCover(false);
         else if (side == RecordSide.Front) CurrentVinylRecord.IsFrontCover(true);
 
-        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming((Vector2)ShowRecordTransform.position, false, coverMoveDuration, Global.SizeValue.RecordCoverHandlingSize);
 
         if (CurrentRecordExamine == RecordExamine.Default)
         {
@@ -248,13 +240,10 @@ public class RecordManager : MonoBehaviour
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
             }
         }
-
     }
 
-
-
     // Bottom button pressed
-    public void ToggleCover()    
+    public void ToggleCover()
     {
         if (CurrentVinylRecord == null) return;
         if (activeMovementCoroutine != null) StopCoroutine(activeMovementCoroutine);
@@ -267,7 +256,6 @@ public class RecordManager : MonoBehaviour
             if (UIManager.Instance.CurrentScreen == Screen.Selection)
             {
                 Debug.Log("Bruh 3");
-
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to put back record on shelf");
             }
         }
@@ -296,6 +284,7 @@ public class RecordManager : MonoBehaviour
             return;
         }
     }
+
     private IEnumerator TogglingRecord(bool show)
     {
         Vector2 destination = show ? (Vector2)ShowRecordTransform.position : (Vector2)hideRecordTransform.position;
@@ -320,10 +309,11 @@ public class RecordManager : MonoBehaviour
 
         UIManager.Instance.UpdateRecordCoverHidden(show);
 
-        yield return RecordCoverTransforming(destination, false, coverMoveSpeed, Global.SizeValue.RecordCoverHandlingSize);
+        yield return RecordCoverTransforming(destination, false, coverMoveDuration, Global.SizeValue.RecordCoverHandlingSize);
 
         activeMovementCoroutine = null;
     }
+
     public void StopTogglingRecord()
     {
         if (activeMovementCoroutine != null)
@@ -339,39 +329,49 @@ public class RecordManager : MonoBehaviour
         }
     }
 
-
-
     public void SetRecordMoveable(bool moveable)
     {
         this.RecordMoveable = moveable;
     }
 
-
-
-    private IEnumerator RecordCoverTransforming(Vector2 targetPos, bool isLocal, float speed, float? targetScale = null)
+    // The Math refactor for fixed-time Lerping with Animation Curves
+    private IEnumerator RecordCoverTransforming(Vector2 targetPos, bool isLocal, float duration, float? targetScale = null)
     {
-        // 1. Scale
-        CurrentVinylRecord.UpdateCoverSize(targetScale.Value, speed);
-
+        float elapsed = 0f;
         Transform t = CurrentVinylRecord.transform;
-        while (true)
+
+        Vector3 startPos = isLocal ? t.localPosition : t.position;
+        Vector3 startScale = t.localScale;
+        Vector3 endScale = targetScale.HasValue ? new Vector3(targetScale.Value, targetScale.Value, 1f) : startScale;
+
+        // Run until the timer hits the exact target duration
+        while (elapsed < duration)
         {
-            // 2. Move
-            if (isLocal)
-                t.localPosition = Vector3.Lerp(t.localPosition, targetPos, speed * Time.deltaTime);
-            else
-                t.position = Vector3.Lerp(t.position, targetPos, speed * Time.deltaTime);
+            elapsed += Time.deltaTime;
 
-            // 3. Check Distance
-            float dist = isLocal ? Vector3.Distance(t.localPosition, targetPos) : Vector3.Distance(t.position, targetPos);
+            // This gives us a raw percentage from 0.0 to 1.0 based on how much time has passed
+            float percent = elapsed / duration;
 
-            if (dist < 0.01f) break;
+            // THE MAGIC SAUCE: Ask the curve what the value should actually be
+            float curveMovePercent = moveCurve.Evaluate(percent);
+
+            // Use LerpUnclamped so the curve can overshoot naturally!
+            if (isLocal) t.localPosition = Vector3.LerpUnclamped(startPos, targetPos, curveMovePercent);
+            else t.position = Vector3.LerpUnclamped(startPos, (Vector3)targetPos, curveMovePercent);
+
+            if (targetScale.HasValue)
+            {
+                float curveScalePercent = scaleCurve.Evaluate(percent);
+                t.localScale = Vector3.LerpUnclamped(startScale, endScale, curveScalePercent);
+            }
+
             yield return null;
         }
 
-        // Snap Final Values
+        // Final Snap to guarantee mathematical perfection
         if (isLocal) t.localPosition = targetPos;
-        else t.position = targetPos;
+        else t.position = (Vector3)targetPos;
 
+        if (targetScale.HasValue) t.localScale = endScale;
     }
 }

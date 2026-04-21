@@ -51,7 +51,7 @@ public class VolumeController : MonoBehaviour
         volume = Mathf.InverseLerp(minVolumeKnobAngle, maxVolumeKnobAngle, convertedAngle);
         TurntableManager.Instance.TurntableSystem.UpdateVolume(volume);
 
-        if (TurntableManager.Instance.TurnedOn) DisplayerManager.Instance.Displayer.UpdateVolumeDisplay(volume);
+        if (TurntableManager.Instance.TurnedOn) TurntableManager.Instance.DisplayerControl.UpdateVolumeDisplay(volume);
     }
 
 

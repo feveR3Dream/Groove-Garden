@@ -4,21 +4,25 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class Record : MonoBehaviour
 {
-
     [Header("References")]
     [SerializeField] private RecordSO recordSO;
-
 
     // References
     public AudioClip RecordTrack { get; private set; }
     public SpriteRenderer SpriteRenderer { get; private set; }
     private Camera cam;
 
-
-    // Values
+    [Header("Time-Based Values (Seconds)")]
     private Vector2 orgPosition;
-    private float alphaFadeSpeed = 10f;
-    private float resizeSpeed = 10f;
+    private float alphaFadeDuration = 0.2f; // Exposed so you can tweak it!
+    private float resizeDuration = 0.2f;    // Exposed so you can tweak it!
+
+
+    // Animation Curve Value
+    private AnimationCurve easeOutCurve = new AnimationCurve(
+    new Keyframe(time: 0f, value: 0f, inTangent: 0f, outTangent: 2f),
+    new Keyframe(time: 1f, value: 1f, inTangent: 0f, outTangent: 0f)
+    );
 
 
     // Coroutines
@@ -26,12 +30,10 @@ public class Record : MonoBehaviour
     private Coroutine resizeCoroutine = null;
     private Coroutine moveCoroutine = null;
 
-
     private void OnValidate()
     {
         UpdateRecordAppearance();
     }
-
 
     private void Awake()
     {
@@ -39,7 +41,6 @@ public class Record : MonoBehaviour
         orgPosition = transform.position;
         cam = Camera.main;
     }
-
 
     private void UpdateRecordAppearance()
     {
@@ -56,31 +57,33 @@ public class Record : MonoBehaviour
         }
     }
 
-
-    private void UpdateRecordAlpha(float alpha, float fadeSpeed)
+    private void UpdateRecordAlpha(float targetAlpha, float duration)
     {
-        alpha = Mathf.Clamp01(alpha); 
+        targetAlpha = Mathf.Clamp01(targetAlpha);
 
         if (alphaCoroutine != null)
         {
             StopCoroutine(alphaCoroutine);
-            alphaCoroutine = null;
         }
 
-        alphaCoroutine = StartCoroutine(UpdatingRecordAlpha(alpha, fadeSpeed));
+        alphaCoroutine = StartCoroutine(UpdatingRecordAlpha(targetAlpha, duration));
     }
 
-
-    private IEnumerator UpdatingRecordAlpha(float alpha, float fadeSpeed)
+    private IEnumerator UpdatingRecordAlpha(float targetAlpha, float duration)
     {
-        Color targetColor = SpriteRenderer.color;
-        while (SpriteRenderer.color.a != alpha)
+        float elapsed = 0f;
+        Color startColor = SpriteRenderer.color;
+        Color targetColor = new Color(startColor.r, startColor.g, startColor.b, targetAlpha);
+
+        while (elapsed < duration)
         {
-            targetColor.a = alpha; 
+            elapsed += Time.deltaTime;
+            float percent = elapsed / duration;
+            
+            // THE MAGIC SAUCE: Apply the Alpha Curve
+            float curvePercent = easeOutCurve.Evaluate(percent);
 
-            Color tempColor = Color.Lerp(SpriteRenderer.color, targetColor, fadeSpeed * Time.deltaTime);
-            SpriteRenderer.color = tempColor;
-
+            SpriteRenderer.color = Color.LerpUnclamped(startColor, targetColor, curvePercent);
             yield return null;
         }
 
@@ -88,121 +91,129 @@ public class Record : MonoBehaviour
         alphaCoroutine = null;
     }
 
-
-    private void UpdateRecordSize(float size, float resizeSpeed)
+    private void UpdateRecordSize(float targetSize, float duration)
     {
-        Vector3 targetSize = Vector3.one * size;
+        Vector3 targetScale = Vector3.one * targetSize;
 
         if (resizeCoroutine != null)
         {
             StopCoroutine(resizeCoroutine);
-            resizeCoroutine = null;
         }
 
-        resizeCoroutine = StartCoroutine(ResizingRecord(targetSize, resizeSpeed));
+        resizeCoroutine = StartCoroutine(ResizingRecord(targetScale, duration));
     }
 
+    private IEnumerator ResizingRecord(Vector3 targetScale, float duration)
+    {
+        float elapsed = 0f;
+        Vector3 startScale = transform.localScale;
 
-    private IEnumerator ResizingRecord(Vector3 targetSize, float resizeSpeed)
-    {   
-        while (!Mathf.Approximately(transform.localScale.magnitude, targetSize.magnitude))
+        while (elapsed < duration)
         {
-            Vector3 tempScale = Vector3.Lerp(transform.localScale, targetSize, resizeSpeed * Time.deltaTime);
-            transform.localScale = tempScale;
+            elapsed += Time.deltaTime;
+            float percent = elapsed / duration;
 
+            // THE MAGIC SAUCE: Apply the Resize Curve
+            float curvePercent = easeOutCurve.Evaluate(percent);
+
+            transform.localScale = Vector3.LerpUnclamped(startScale, targetScale, curvePercent);
             yield return null;
         }
 
-        transform.localScale = targetSize;
+        transform.localScale = targetScale;
         resizeCoroutine = null;
     }
 
-
-    public void MoveTo(RecordMoveTo moveTo, float moveToSpeed) // This just moves the record
+    public void MoveTo(RecordMoveTo moveTo, float moveDuration)
     {
         if (moveCoroutine != null)
         {
             StopCoroutine(moveCoroutine);
-            moveCoroutine = null;
         }
 
-        moveCoroutine = StartCoroutine(MovingTo(moveTo, moveToSpeed));
+        moveCoroutine = StartCoroutine(MovingTo(moveTo, moveDuration));
     }
 
-    private IEnumerator MovingTo(RecordMoveTo moveTo, float moveToSpeed) // Now we can use Vector3 hehehe 
+    private IEnumerator MovingTo(RecordMoveTo moveTo, float duration)
     {
+        // 1. Setup Phase: Configure UI, Sorting, Alpha, and Size based on the target
         if (moveTo == RecordMoveTo.To_Mouse)
         {
+            UIManager.Instance.PlacingRecordDown = true;
             RecordManager.Instance.SetRecordMoveable(true);
+
+            SpriteRenderer.sortingLayerName = "Turntable & Record";
+            SpriteRenderer.sortingOrder = Global.SortingValue.SpawnedInSortingOrder;
+
+            UpdateRecordAlpha(0.5f, alphaFadeDuration);
+            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeDuration);
+        }
+        else if (moveTo == RecordMoveTo.To_Turntable)
+        {
+            UIManager.Instance.PlacingRecordDown = false;
 
             SpriteRenderer.sortingLayerName = "Turntable & Record";
             SpriteRenderer.sortingOrder = Global.SortingValue.HandlingSortingOrder;
 
-            UpdateRecordAlpha(0.5f, alphaFadeSpeed);
-            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeSpeed);
-        }
-        else if (moveTo == RecordMoveTo.To_Turntable)
-        {
-            SpriteRenderer.sortingLayerName = "Turntable & Record";
-
-            UpdateRecordAlpha(1f, alphaFadeSpeed);
-            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeSpeed);
+            UpdateRecordAlpha(1f, alphaFadeDuration);
+            UpdateRecordSize(Global.SizeValue.RecordDiskHandlingSize, resizeDuration);
         }
         else if (moveTo == RecordMoveTo.To_Spawned_Pos)
         {
+            UIManager.Instance.PlacingRecordDown = false;
             RecordManager.Instance.SetRecordMoveable(false);
 
             SpriteRenderer.sortingLayerName = "Shelf, Covers & Album Names";
             SpriteRenderer.sortingOrder = Global.SortingValue.SpawnedInSortingOrder;
 
-            //TurntableManager.Instance.EquipRecord = false;
             TurntableManager.Instance.EquipRecord = false;
-
-            //Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
             Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
 
-            UpdateRecordAlpha(1f, alphaFadeSpeed);
-            UpdateRecordSize(Global.SizeValue.RecordDiskSpawnedSize, resizeSpeed);
+            UpdateRecordAlpha(1f, alphaFadeDuration);
+            UpdateRecordSize(Global.SizeValue.RecordDiskSpawnedSize, resizeDuration);
         }
 
-        Vector2 targetPos = this.transform.position;
-
-        while (true)
+        // 2. Movement Phase
+        if (moveTo == RecordMoveTo.To_Mouse)
         {
-            if (moveTo == RecordMoveTo.To_Mouse)
+            // INFINITE LOOP: Smoothly follow the mouse forever until interrupted
+            // We intentionally DO NOT use an Animation Curve here because SmoothDamp handles physics-based easing dynamically.
+            Vector2 velocity = Vector2.zero;
+            float smoothDampTime = 0.05f;
+
+            while (true)
             {
                 if (RecordManager.Instance.CurrentRecord != null)
-                    targetPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                {
+                    Vector2 targetPos = cam.ScreenToWorldPoint(Input.mousePosition);
+                    transform.position = Vector2.SmoothDamp(transform.position, targetPos, ref velocity, smoothDampTime);
+                }
+                yield return null;
             }
-            else if (moveTo == RecordMoveTo.To_Turntable)
+        }
+        else
+        {
+            // FIXED TARGET LOOP: Strict time-based Lerp to a stationary point with Animation Curves
+            float elapsed = 0f;
+            Vector2 startPos = transform.position;
+            Vector2 targetPos = (moveTo == RecordMoveTo.To_Turntable) ? ButtonManager.Instance.RecordPlacementPos : orgPosition;
+
+            while (elapsed < duration)
             {
-                //targetPos = TurntableManager.Instance.RecordPlacementPosition;
-                //targetPos = NewTurntableManager.Instance.RecordPlacementPosition;
+                elapsed += Time.deltaTime;
+                float percent = elapsed / duration;
 
-                targetPos = ButtonManager.Instance.RecordPlacementPos;
-            }
-            else if (moveTo == RecordMoveTo.To_Spawned_Pos)
-            {
-                targetPos = orgPosition;
-            }
+                // THE MAGIC SAUCE: Apply the Move Curve
+                float curvePercent = easeOutCurve.Evaluate(percent);
 
-            Vector2 tempPos = Vector2.Lerp(transform.position, targetPos, moveToSpeed * Time.deltaTime);
-            transform.position = tempPos;
-
-            if (moveTo != RecordMoveTo.To_Mouse &&
-                Vector2.Distance(transform.position, targetPos) < 0.01f)
-            {
-                transform.position = targetPos;
-
-                //if (moveTo == RecordMoveTo.To_Spawned_Pos) Destroy(gameObject);
-                break;
+                transform.position = Vector2.LerpUnclamped(startPos, targetPos, curvePercent);
+                yield return null;
             }
 
-            yield return null;
+            // Guarantee exact final position
+            transform.position = targetPos;
         }
 
         moveCoroutine = null;
     }
-
-    // MOVE RECORD FOLLOW MOUSE TO THIS SCRIPT
 }

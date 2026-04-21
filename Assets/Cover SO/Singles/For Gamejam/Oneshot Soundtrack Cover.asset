@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a46b7293cc8e3547b22ead05c72c5d8, type: 3}
+  m_Name: Oneshot Soundtrack Cover
+  m_EditorClassIdentifier: 
+  vinylName: Oneshot Soundtrack
+  vinylArtist: OG Mason
+  frontCover: {fileID: 21300000, guid: 38d602f3030eafc4e92bc8a1154afbf6, type: 3}
+  backCover: {fileID: 21300000, guid: 42669a99ba449f84e8e070c423604da2, type: 3}

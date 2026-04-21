@@ -65,7 +65,7 @@ public class PowerController : MonoBehaviour
             KnobManager.Instance.TonearmControl.StopTonearm();
             KnobManager.Instance.RPMControl.ResetRPMStatus();
 
-            DisplayerManager.Instance.Displayer.UpdatePowerDisplay(isOn: false);
+            TurntableManager.Instance.DisplayerControl.UpdatePowerDisplay(isOn: false);
 
             powerLightControl.Renderer.color = Color.black;
             powerLightControl.LightSetting.color = Color.black;
@@ -83,16 +83,16 @@ public class PowerController : MonoBehaviour
                 KnobManager.Instance.VolumeControl.ProcessVolumeKnob();
 
                 // REVERB DISPLAY
-                DisplayerManager.Instance.Displayer.UpdateReverbDisplay(ButtonManager.Instance.ReverbControl.IsReverb);
+                TurntableManager.Instance.DisplayerControl.UpdateReverbDisplay(ButtonManager.Instance.ReverbControl.IsReverb);
 
                 // READ RECORD DISPLAY
-                DisplayerManager.Instance.Displayer.UpdateRecordDisplay(TurntableManager.Instance.EquipRecord);
+                TurntableManager.Instance.DisplayerControl.UpdateRecordDisplay(TurntableManager.Instance.EquipRecord);
 
                 //// PLAY & PAUSE DISPLAY
                 //DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
             }
 
-            DisplayerManager.Instance.Displayer.UpdatePowerDisplay(isOn: true); 
+            TurntableManager.Instance.DisplayerControl.UpdatePowerDisplay(isOn: true); 
 
             powerLightControl.Renderer.color = Color.red;
             powerLightControl.LightSetting.color = Color.red;

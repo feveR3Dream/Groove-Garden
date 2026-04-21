@@ -16,6 +16,10 @@ public class TonearmController : MonoBehaviour
     [SerializeField] private float endTonearmAngle;
 
 
+    [Header("Shadow Reference")]
+    [SerializeField] private SpriteRenderer shadowRenderer;
+
+
     [Header("References")]
     [SerializeField] private Transform interactionPoint;
 
@@ -31,6 +35,8 @@ public class TonearmController : MonoBehaviour
 
     // Coroutine
     private Coroutine moveTonearmCoroutine = null;
+    private Coroutine fadeShadowCoroutine = null;
+
 
 
     private void Awake()
@@ -56,12 +62,13 @@ public class TonearmController : MonoBehaviour
         if (!platterCollider.enabled) platterCollider.enabled = true;
 
         knobControl.StopResetRotation();
-        knobControl.UpdateKnobAlpha(0.25f, knobControl.AlphaFadeSpeed);
+        knobControl.UpdateKnobAlpha(0f, knobControl.AlphaFadeSpeed);
+        FadeTonearmShadow(0.5f, knobControl.AlphaFadeSpeed);
 
         interactionPoint.gameObject.SetActive(true);
 
         if (TurntableManager.Instance.RecordRead) 
-            DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
+            TurntableManager.Instance.DisplayerControl.UpdatePlayPauseDisplay();
     }
 
 
@@ -102,10 +109,11 @@ public class TonearmController : MonoBehaviour
                         platterCollider.enabled = false;
                     
                     if (TurntableManager.Instance.RecordRead)
-                        DisplayerManager.Instance.Displayer.UpdatePlayPauseDisplay();
+                        TurntableManager.Instance.DisplayerControl.UpdatePlayPauseDisplay();
                 }
 
                 knobControl.UpdateKnobAlpha(1f, knobControl.AlphaFadeSpeed);
+                FadeTonearmShadow(1f, knobControl.AlphaFadeSpeed);
 
                 interactionPoint.gameObject.SetActive(false);
 
@@ -115,6 +123,7 @@ public class TonearmController : MonoBehaviour
 
         knobControl.CorrectRotation(knobControl.gameObject, defaultTonearmAngle, rotateSpeed);
         knobControl.UpdateKnobAlpha(1f, knobControl.AlphaFadeSpeed);
+        FadeTonearmShadow(1f, knobControl.AlphaFadeSpeed);
 
         interactionPoint.gameObject.SetActive(false);
         
@@ -214,6 +223,45 @@ public class TonearmController : MonoBehaviour
 
         return recordTimeMark;
     }
+
+    //--------
+    #endregion
+
+
+    #region EXTRA
+    //-----------
+
+    private void FadeTonearmShadow(float targetAlpha, float speed)
+    {
+        if (shadowRenderer == null) return;
+
+        if (fadeShadowCoroutine != null)
+        {
+            StopCoroutine(fadeShadowCoroutine);
+            fadeShadowCoroutine = null;
+        }
+
+        fadeShadowCoroutine = StartCoroutine(FadingTonearmShadow(targetAlpha, speed));
+    }
+    private IEnumerator FadingTonearmShadow(float targetAlpha, float speed)
+    {
+        Color currentColor = shadowRenderer.color;
+        Color targetColor = currentColor;
+        targetColor.a = targetAlpha;
+
+        while (Mathf.Abs(currentColor.a - targetAlpha) > 0.01f)
+        {
+            currentColor = Color.Lerp(currentColor, targetColor, speed * Time.deltaTime);
+            shadowRenderer.color = currentColor;
+
+            yield return null;
+        }
+
+        shadowRenderer.color = targetColor;
+        fadeShadowCoroutine = null;
+    }
+
+
 
     //--------
     #endregion

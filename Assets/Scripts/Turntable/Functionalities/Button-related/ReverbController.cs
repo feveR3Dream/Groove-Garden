@@ -21,7 +21,7 @@ public class ReverbController : MonoBehaviour
     {
         TurntableManager.Instance.TurntableSystem.ProcessReverb(isReverb = !isReverb);
 
-        DisplayerManager.Instance.Displayer.UpdateReverbDisplay(isReverb);
+        TurntableManager.Instance.DisplayerControl.UpdateReverbDisplay(isReverb);
     }
 
 }
