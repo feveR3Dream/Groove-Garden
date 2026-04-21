@@ -57,6 +57,9 @@ TagManager:
   - name: UI Tutorial
     uniqueID: 2346825337
     locked: 0
-  - name: UI Overlord
+  - name: UI Must Have
     uniqueID: 1168008129
+    locked: 0
+  - name: UI Intro
+    uniqueID: 2862993725
     locked: 0
