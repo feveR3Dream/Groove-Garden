@@ -208,14 +208,12 @@ public class UIManager : MonoBehaviour
     {
         if (hide)
         {
-            Debug.Log("Not Hidden");
             SetButtonState(RightButton, RightText, false, interaction: false);
             if (CurrentScreen == Screen.Selection)
                 SetButtonState(LeftButton, LeftText, false, interaction: false);
         }
         else 
         {
-            Debug.Log("Hidden");
             SetButtonState(RightButton, RightText, true, interaction: true);
             if (CurrentScreen == Screen.Selection)
                 SetButtonState(LeftButton, LeftText, true, interaction: true);

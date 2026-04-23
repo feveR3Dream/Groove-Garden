@@ -185,8 +185,6 @@ public class TonearmController : MonoBehaviour
             float currentTimeMark = system.VinylSpeaker.time;
             float duration = totalDuration - currentTimeMark;
 
-            Debug.Log($"Stop Track Length: {duration}");
-
             StopCoroutine(moveTonearmCoroutine);
             moveTonearmCoroutine = null;
         }

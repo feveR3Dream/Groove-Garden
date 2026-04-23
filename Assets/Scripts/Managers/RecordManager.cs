@@ -255,7 +255,6 @@ public class RecordManager : MonoBehaviour
 
             if (UIManager.Instance.CurrentScreen == Screen.Selection)
             {
-                Debug.Log("Bruh 3");
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to put back record on shelf");
             }
         }
@@ -263,20 +262,20 @@ public class RecordManager : MonoBehaviour
         {
             if (CurrentRecordExamine == RecordExamine.Info)
             {
-                Debug.Log("Back to Default");
+                // Back to Default
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to hide vinyl cover");
                 activeMovementCoroutine = StartCoroutine(FlipRecordCover(RecordSide.Front, RecordExamine.Default));
             }
             else if (CurrentRecordExamine == RecordExamine.Unsheathe)
             {
-                Debug.Log("Sheathe Record and Back to Default");
+                // Sheathe Record and Back to Default
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.BottomText, "Press to hide vinyl cover");
                 UIManager.Instance.SetButtonTextContent(UIManager.Instance.RightRecordText, "Press to unsheathe record");
                 activeMovementCoroutine = StartCoroutine(UnsheathingRecordToggle(false));
             }
             else
             {
-                Debug.Log("Switch off Record");
+                // Switch off Record
                 CurrentRecordToggle = RecordToggle.Hide;
                 activeMovementCoroutine = StartCoroutine(TogglingRecord(false));
             }
@@ -349,13 +348,9 @@ public class RecordManager : MonoBehaviour
         {
             elapsed += Time.deltaTime;
 
-            // This gives us a raw percentage from 0.0 to 1.0 based on how much time has passed
             float percent = elapsed / duration;
-
-            // THE MAGIC SAUCE: Ask the curve what the value should actually be
             float curveMovePercent = moveCurve.Evaluate(percent);
 
-            // Use LerpUnclamped so the curve can overshoot naturally!
             if (isLocal) t.localPosition = Vector3.LerpUnclamped(startPos, targetPos, curveMovePercent);
             else t.position = Vector3.LerpUnclamped(startPos, (Vector3)targetPos, curveMovePercent);
 

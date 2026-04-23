@@ -39,27 +39,9 @@ public class Cursor : MonoBehaviour
         // MOUSE DOWN-------------------
         if (Input.GetMouseButtonDown(0))
         {
-            // 2. THE ULTIMATE UI SHIELD
-            // If the mouse is over a UI element, abort the world-space click entirely.
+
             if (EventSystem.current.IsPointerOverGameObject())
             {
-                // --- DEBUGGER: Find out exactly what UI element is eating the click ---
-                PointerEventData pointerData = new PointerEventData(EventSystem.current)
-                {
-                    position = Input.mousePosition
-                };
-
-                List<RaycastResult> results = new List<RaycastResult>();
-                EventSystem.current.RaycastAll(pointerData, results);
-
-                if (results.Count > 0)
-                {
-                    // This prints the name of the top-most UI element to the console.
-                    // Clicking the message in the console will highlight the object in your Hierarchy!
-                    Debug.Log($"<color=orange>UI Click Blocked By:</color> {results[0].gameObject.name}", results[0].gameObject);
-                }
-                // ----------------------------------------------------------------------
-
                 return;
             }
 

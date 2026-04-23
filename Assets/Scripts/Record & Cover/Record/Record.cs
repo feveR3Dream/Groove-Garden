@@ -167,7 +167,6 @@ public class Record : MonoBehaviour
             SpriteRenderer.sortingOrder = Global.SortingValue.SpawnedInSortingOrder;
 
             TurntableManager.Instance.EquipRecord = false;
-            Debug.Log($"Equip Record: {TurntableManager.Instance.EquipRecord}");
 
             UpdateRecordAlpha(1f, alphaFadeDuration);
             UpdateRecordSize(Global.SizeValue.RecordDiskSpawnedSize, resizeDuration);

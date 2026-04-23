@@ -123,12 +123,7 @@ public class DisplayerControl : MonoBehaviour
             {
                 EnableTextBlinkingEffect(toggleText, toggleBlinkingCoroutine, Global.DisplayerTextOptions.ToggleText.Pause);
             }
-
-
-            Debug.Log("Tonearm on record!");
         }
-
-        Debug.Log("Rendered");
     }
 
 

@@ -93,8 +93,6 @@ public class TurntableManager : MonoBehaviour
         {
             buttonControl.UpdateButtonAlpha(buttonControl.ButtonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
             RecordInteraction();
-
-            Debug.Log("Stacked");
         }
 
         
@@ -159,8 +157,6 @@ public class TurntableManager : MonoBehaviour
 
             if (TurnedOn) TurntableManager.Instance.DisplayerControl.UpdateRecordDisplay(EquipRecord);
         }
-
-        Debug.Log($"Equip Record: {EquipRecord}");
     }
 
 
