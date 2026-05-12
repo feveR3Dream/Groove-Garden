@@ -111,7 +111,6 @@ public class TurntableManager : MonoBehaviour
                 buttonControl.UpdateButtonAlpha(buttonControl.ButtonIdleOffAlpha, buttonControl.AlphaFadeSpeed);
                 buttonControl.UpdateButtonSize(buttonControl.IdleSizeOFF, buttonControl.ResizeSpeed);
             }
-            
 
 
             // START STOP BUTTON
@@ -155,7 +154,7 @@ public class TurntableManager : MonoBehaviour
                 UIManager.Instance.UpdateRecordCoverEquip(false);
             }
 
-            if (TurnedOn) TurntableManager.Instance.DisplayerControl.UpdateRecordDisplay(EquipRecord);
+            if (TurnedOn) DisplayerControl.UpdateRecordDisplay(EquipRecord);
         }
     }
 

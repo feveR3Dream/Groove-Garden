@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(ButtonControl))]
@@ -12,6 +11,7 @@ public class StartStopController : MonoBehaviour
 
     // Start Stop Button Values
     private bool isPlaying = false;
+    public bool IsPlaying => isPlaying;
 
 
     // Playing Record & Anything Relevant Coroutines
@@ -87,7 +87,7 @@ public class StartStopController : MonoBehaviour
             {
                 if (!KnobManager.Instance.TonearmControl.TonearmAtTheEnd)
                 {
-                    if (TurntableManager.Instance.EquipRecord && TurntableManager.Instance.RecordRead)
+                    if (TurntableManager.Instance.EquipRecord && TurntableManager.Instance.RecordRead && buttonControl.TurnedOn)
                     {
                         TurntableManager.Instance.TurntableSystem.PlayRecord(RecordManager.Instance.CurrentRecord, KnobManager.Instance.RPMControl.CurrentRecordSpinSpeed, KnobManager.Instance.RPMControl.TargetRPM);
                         if (TurntableManager.Instance.TonearmOnRecord) KnobManager.Instance.TonearmControl.TrackTonearm();

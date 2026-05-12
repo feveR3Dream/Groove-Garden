@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 [RequireComponent(typeof(KnobControl))]
 public class TonearmController : MonoBehaviour
@@ -83,6 +81,8 @@ public class TonearmController : MonoBehaviour
         LayerMask convertedLayer = 1 << gameObject.layer; // All turntable component share the same layer.
         RaycastHit2D[] hits = Physics2D.RaycastAll(interactionPoint.position, Vector2.zero, 10f, convertedLayer);
 
+        tonearmAtTheEnd = IsTonearmAtTheEnd();
+
         foreach (RaycastHit2D hit in hits)
         {
             // HIT ITSELF
@@ -95,13 +95,15 @@ public class TonearmController : MonoBehaviour
                 GameObject platter = ButtonManager.Instance.RecordPlacementControl.gameObject;
                 Record record = RecordManager.Instance.CurrentRecord;
 
+
                 if (record == null)
                 {
                     knobControl.CorrectRotation(knobControl.gameObject, defaultTonearmAngle, rotateSpeed);
                 }
                 else
                 {
-                    tonearmAtTheEnd = IsTonearmAtTheEnd();
+                    //tonearmAtTheEnd = IsTonearmAtTheEnd();
+
                     TurntableManager.Instance.TonearmOnRecord = true;
 
                     Collider2D platterCollider = platter.GetComponent<Collider2D>();
@@ -201,7 +203,10 @@ public class TonearmController : MonoBehaviour
         float clockwiseAngle = knobControl.NormalizeClockwise(rawAngle);
         float convertedAngle = 360 - clockwiseAngle;
 
-        float percent = Mathf.InverseLerp(startTonearmAngle, endTonearmAngle, convertedAngle);
+        float totalSweep = Mathf.DeltaAngle(startTonearmAngle, endTonearmAngle);
+        float currentSweep = Mathf.DeltaAngle(startTonearmAngle, convertedAngle);
+
+        float percent = Mathf.Clamp01(currentSweep / totalSweep);
 
         return percent >= 0.995f;
     }
@@ -214,7 +219,9 @@ public class TonearmController : MonoBehaviour
         float clockwiseAngle = knobControl.NormalizeClockwise(rawAngle);
         float convertedAngle = 360 - clockwiseAngle;
 
-        float percent = Mathf.InverseLerp(startTonearmAngle, endTonearmAngle, convertedAngle);
+        float totalSweep = Mathf.DeltaAngle(startTonearmAngle, endTonearmAngle);
+        float currentSweep = Mathf.DeltaAngle(startTonearmAngle, convertedAngle);
+        float percent = Mathf.Clamp01(currentSweep / totalSweep);
 
         Record record = RecordManager.Instance.CurrentRecord;
         float recordTimeMark = record.RecordTrack.length * percent;

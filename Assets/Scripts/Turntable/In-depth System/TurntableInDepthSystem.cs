@@ -18,10 +18,7 @@ public class TurntableInDepthSystem : MonoBehaviour
 
 
     // Variables
-    //[HideInInspector] public float CurrentTimeMark = 0f; // Determine time mark of track to play
     private bool isPlayingMusic = false;
-    public bool IsPlayingMusic => isPlayingMusic;
-
     private float currentSpinSpeed;
 
 
@@ -91,11 +88,8 @@ public class TurntableInDepthSystem : MonoBehaviour
 
     public void StopRecord()
     {
-        if (isPlayingMusic)
-        {
-            isPlayingMusic = false;
-            PauseMusic();
-        }
+        isPlayingMusic = false;
+        PauseMusic();
     }
 
 

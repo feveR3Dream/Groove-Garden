@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -115,7 +116,7 @@ public class DisplayerControl : MonoBehaviour
         }
         else
         {
-            if (TurntableManager.Instance.TurntableSystem.IsPlayingMusic)
+            if (/*TurntableManager.Instance.TurntableSystem.IsPlayingMusic*/ButtonManager.Instance.StartStopControl.IsPlaying)
             {
                 DisableTextBlinkingEffect(toggleText, Global.DisplayerTextOptions.ToggleText.Play);
             }
@@ -183,6 +184,8 @@ public class DisplayerControl : MonoBehaviour
             toggleText.text = Global.DisplayerTextOptions.ToggleText.EmptyTrackText;
             DisableTextScrollingEffect(recordNameAndPowerText, Global.DisplayerTextOptions.DisplayAndPowerText.EmptyTrackText);
 
+            TurntableManager.Instance.RecordRead = false;
+
             yield break;
         }
 
@@ -236,15 +239,7 @@ public class DisplayerControl : MonoBehaviour
     //----------------------
     private string RepeatTextGenerator(int amount, string textToRepeat)
     {
-        var tempString = new TextMeshProUGUI();
-        tempString.text = "";
-
-        for (int i = 0; i < amount; i++)
-        {
-            tempString.text += textToRepeat;
-        }
-
-        return tempString.text;
+        return string.Concat(Enumerable.Repeat(textToRepeat, amount));
     }
 
 

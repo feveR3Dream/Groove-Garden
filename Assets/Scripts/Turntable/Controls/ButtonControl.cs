@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ButtonControl : MonoBehaviour, IButtonInteractable
@@ -111,7 +110,7 @@ public class ButtonControl : MonoBehaviour, IButtonInteractable
         else if (mouseButton == MouseButton.Up)
         {
             if (registered) TurnedOn = !TurnedOn;
-            
+
             //TurntableManager.Instance.ButtonUp(this);
             TurntableManager.Instance.ButtonUp(this);
         }
